@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #020617;    /* slate-950 */
+  --color-surface: #0f172a;    /* slate-900 */
+  --color-card: #1e293b;       /* slate-800 */
+  --color-accent: #16a34a;     /* green-600 */
+  --color-highlight: #facc15;  /* yellow-400 */
+}
+
+body {
+  @apply bg-slate-950 text-white;
+}
