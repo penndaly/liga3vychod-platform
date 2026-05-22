@@ -9,6 +9,7 @@ import Dashboard from './pages/admin/Dashboard'
 import Fixtures from './pages/admin/Fixtures'
 import Standings from './pages/admin/Standings'
 import Clubs from './pages/admin/Clubs'
+import ClubDetail from './pages/admin/ClubDetail'
 import News from './pages/admin/News'
 import Media from './pages/admin/Media'
 import Users from './pages/admin/Users'
@@ -41,6 +42,7 @@ export default function App() {
         <Route path="/admin/fixtures"    element={<Guard Page={Fixtures}     />} />
         <Route path="/admin/standings"   element={<Guard Page={Standings}    />} />
         <Route path="/admin/clubs"       element={<Guard Page={Clubs}        />} />
+        <Route path="/admin/clubs/:clubId" element={<Guard Page={ClubDetail}  />} />
         <Route path="/admin/news"        element={<Guard Page={News}         />} />
         <Route path="/admin/media"       element={<Guard Page={Media}        />} />
         <Route path="/admin/users"       element={<Guard Page={Users}        />} />
