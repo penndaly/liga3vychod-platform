@@ -12,6 +12,7 @@ import Clubs from './pages/admin/Clubs'
 import ClubDetail from './pages/admin/ClubDetail'
 import News from './pages/admin/News'
 import Media from './pages/admin/Media'
+import MediaAlbum from './pages/admin/MediaAlbum'
 import Users from './pages/admin/Users'
 import Branding from './pages/admin/Branding'
 import Sponsors from './pages/admin/Sponsors'
@@ -44,7 +45,8 @@ export default function App() {
         <Route path="/admin/clubs"       element={<Guard Page={Clubs}        />} />
         <Route path="/admin/clubs/:clubId" element={<Guard Page={ClubDetail}  />} />
         <Route path="/admin/news"        element={<Guard Page={News}         />} />
-        <Route path="/admin/media"       element={<Guard Page={Media}        />} />
+        <Route path="/admin/media"           element={<Guard Page={Media}       />} />
+        <Route path="/admin/media/:albumId"  element={<Guard Page={MediaAlbum}  />} />
         <Route path="/admin/users"       element={<Guard Page={Users}        />} />
         <Route path="/admin/branding"    element={<Guard Page={Branding}     />} />
         <Route path="/admin/sponsors"    element={<Guard Page={Sponsors}     />} />
