@@ -2,7 +2,7 @@
  * Seed script — Liga 3 Východ 2025/26
  * Usage: node scripts/seed.mjs <email> <password>
  *
- * Seeds: settings, clubs, club rosters, fixtures (8 completed + 3 upcoming),
+ * Seeds: settings, clubs, club rosters, fixtures,
  *        player_stats, news, sponsors, referees, awards_potm
  */
 import { initializeApp }                           from 'firebase/app'
@@ -12,6 +12,7 @@ import { getFirestore, doc, setDoc, collection,
 import { readFileSync }                             from 'fs'
 import { resolve, dirname }                         from 'path'
 import { fileURLToPath }                            from 'url'
+import { CLUBS_2025_26 }                            from '../src/config/clubs-config.js'
 
 // ── Bootstrap ──────────────────────────────────────────────────────────────
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -45,28 +46,30 @@ async function step(label, fn) {
   console.log(` ✓${n !== undefined ? ` (${n})` : ''}`)
 }
 
-// ── Reference data ─────────────────────────────────────────────────────────
-const CLUBS = [
-  { id: '1',  name: 'FK Humenné',             short: 'HMN', city: 'Humenné',              founded: 1919, stadium: 'Štadión FK Humenné',            strength: 7 },
-  { id: '2',  name: 'FK Spišská Nová Ves',    short: 'SNV', city: 'Spišská Nová Ves',     founded: 1921, stadium: 'Štadión FK Spišská Nová Ves',   strength: 6 },
-  { id: '3',  name: 'MŠK Tesla Stropkov',     short: 'STR', city: 'Stropkov',             founded: 1921, stadium: 'Štadión MŠK Stropkov',          strength: 5 },
-  { id: '4',  name: 'OFK SIM Raslavice',      short: 'RAS', city: 'Raslavice',            founded: 1928, stadium: 'Ihrisko OFK Raslavice',         strength: 4 },
-  { id: '5',  name: 'ŠK Odeva Lipany',        short: 'LIP', city: 'Lipany',               founded: 1923, stadium: 'Štadión ŠK Odeva Lipany',       strength: 6 },
-  { id: '6',  name: 'MFK Spartak Medzev',     short: 'MED', city: 'Medzev',               founded: 1920, stadium: 'Štadión MFK Medzev',            strength: 5 },
-  { id: '7',  name: 'MFK Snina',              short: 'SNA', city: 'Snina',                founded: 1928, stadium: 'Štadión MFK Snina',             strength: 6 },
-  { id: '8',  name: 'FC Košice B',            short: 'KSB', city: 'Košice',               founded: 1952, stadium: 'Štadión FC Košice',             strength: 8 },
-  { id: '9',  name: '1. MFK Kežmarok',        short: 'KEŽ', city: 'Kežmarok',             founded: 1921, stadium: 'Štadión 1. MFK Kežmarok',       strength: 6 },
-  { id: '10', name: 'MFK Vranov nad Topľou',  short: 'VNT', city: 'Vranov nad Topľou',    founded: 1921, stadium: 'Štadión MFK Vranov',            strength: 7 },
-  { id: '11', name: 'FK Poprad',              short: 'POP', city: 'Poprad',               founded: 1936, stadium: 'Štadión FK Poprad',             strength: 7 },
-  { id: '12', name: 'MFK Slovan Sabinov',     short: 'SAB', city: 'Sabinov',              founded: 1923, stadium: 'Štadión MFK Sabinov',           strength: 5 },
-  { id: '13', name: 'FC Lokomotíva Košice',   short: 'LOK', city: 'Košice',               founded: 1924, stadium: 'Štadión FC Lokomotíva',         strength: 5 },
-  { id: '14', name: 'MŠK Spišské Podhradie',  short: 'SPP', city: 'Spišské Podhradie',    founded: 1930, stadium: 'Štadión MŠK Spišské Podhradie', strength: 4 },
-]
+// ── Club data: merge CLUBS_2025_26 with seed-specific metadata ────────────
+const CLUB_META = {
+  1:  { city: 'Humenné',           founded: 1919, stadium: 'Štadión FK Humenné',               strength: 7 },
+  2:  { city: 'Spišská Nová Ves',  founded: 1921, stadium: 'Mestský štadión SNV',               strength: 6 },
+  3:  { city: 'Stropkov',          founded: 1921, stadium: 'Štadión MŠK Stropkov',              strength: 5 },
+  4:  { city: 'Raslavice',         founded: 1928, stadium: 'Ihrisko OFK Raslavice',             strength: 4 },
+  5:  { city: 'Lipany',            founded: 1923, stadium: 'Štadión ŠK Odeva Lipany',           strength: 6 },
+  6:  { city: 'Medzev',            founded: 1920, stadium: 'Štadión MFK Medzev',                strength: 5 },
+  7:  { city: 'Snina',             founded: 1928, stadium: 'Mestský štadión Snina',             strength: 6 },
+  8:  { city: 'Košice',            founded: 1952, stadium: 'Štadión FC Košice',                 strength: 8 },
+  9:  { city: 'Kežmarok',          founded: 1921, stadium: 'Mestský štadión Kežmarok',          strength: 6 },
+  10: { city: 'Vranov nad Topľou', founded: 1921, stadium: 'Mestský štadión Vranov',            strength: 7 },
+  11: { city: 'Poprad',            founded: 1936, stadium: 'Mestský štadión Poprad',            strength: 7 },
+  12: { city: 'Sabinov',           founded: 1923, stadium: 'Mestský štadión Sabinov',           strength: 5 },
+  13: { city: 'Košice',            founded: 1924, stadium: 'Štadión FC Lokomotíva',             strength: 5 },
+  14: { city: 'Spišské Podhradie', founded: 1930, stadium: 'Štadión MŠK Spišské Podhradie',    strength: 4 },
+}
 
-// Deterministic score from team strengths + home advantage
+const CLUBS = CLUBS_2025_26.map(c => ({ ...c, id: String(c.id), ...CLUB_META[c.id] }))
+
+// ── Score generation ───────────────────────────────────────────────────────
 function score(homeIdx, awayIdx, round) {
   const h = CLUBS[homeIdx].strength, a = CLUBS[awayIdx].strength
-  const diff = (h - a) + 1          // +1 home advantage
+  const diff = (h - a) + 1
   const seed = (homeIdx * 7 + awayIdx * 13 + round * 3) % 20
   if (diff >= 5)  return seed < 10 ? [3,0] : [2,0]
   if (diff >= 3)  return seed < 8  ? [2,1] : seed < 14 ? [2,0] : seed < 17 ? [1,0] : [3,1]
@@ -76,7 +79,7 @@ function score(homeIdx, awayIdx, round) {
   return seed < 8 ? [0,2] : seed < 14 ? [0,3] : [1,3]
 }
 
-// Berger round-robin schedule for 14 teams (first half of season)
+// ── Berger round-robin ─────────────────────────────────────────────────────
 function buildSchedule() {
   const n = 14, arr = Array.from({length: n-1}, (_,i) => i+1)
   return Array.from({length: n-1}, () => {
@@ -88,9 +91,9 @@ function buildSchedule() {
 }
 
 const ROUND_DATES = [
-  '10.8.2025','17.8.2025','24.8.2025','31.8.2025',
-  '7.9.2025', '14.9.2025','21.9.2025','28.9.2025',
-  '5.10.2025','19.10.2025','26.10.2025',
+  '15.8.2025','22.8.2025','29.8.2025','5.9.2025',
+  '12.9.2025','19.9.2025','26.9.2025','3.10.2025',
+  '17.10.2025','24.10.2025','31.10.2025',
 ]
 
 // ── Main ───────────────────────────────────────────────────────────────────
@@ -105,8 +108,8 @@ await step('Signing in', async () => {
 console.log('\n── Settings')
 await step('season', async () => {
   await setDoc(doc(db, 'settings', 'season'), {
-    currentSeason: '2025/26', currentRound: 8, totalRounds: 26,
-    startDate: '10.8.2025', endDate: '1.6.2026',
+    currentSeason: '2025/26', currentRound: 2, totalRounds: 26,
+    startDate: '15.8.2025', endDate: '31.5.2026',
     updatedAt: Timestamp.now(),
   })
 })
@@ -131,38 +134,40 @@ console.log('\n── Clubs')
 await step('profiles', async () => {
   const b = writeBatch(db)
   CLUBS.forEach(c => b.set(doc(db, 'clubs', c.id), {
-    name: c.name, city: c.city, founded: c.founded,
-    stadium: c.stadium, updatedAt: Timestamp.now(),
+    name: c.name, short: c.short, slug: c.slug,
+    city: c.city, founded: c.founded, stadium: c.stadium,
+    updatedAt: Timestamp.now(),
   }))
   await b.commit()
   return CLUBS.length
 })
 
-// Rosters for the top 3 clubs
+// Rosters for top 3 clubs (by strength: FC Košice B, FK Humenné, MFK Vranov nad Topľou)
 const ROSTERS = {
-  '1': [ // FK Bardejov
-    { name: 'Marek Kováč',    position: 'FWD', jerseyNumber: 9,  dateOfBirth: '1997-03-14', nationality: 'SK' },
-    { name: 'Rastislav Mináč',position: 'MID', jerseyNumber: 8,  dateOfBirth: '1999-07-22', nationality: 'SK' },
-    { name: 'Jozef Varga',    position: 'DEF', jerseyNumber: 5,  dateOfBirth: '1996-11-05', nationality: 'SK' },
-    { name: 'Peter Rusnák',   position: 'DEF', jerseyNumber: 3,  dateOfBirth: '2000-01-18', nationality: 'SK' },
-    { name: 'Lukáš Takáč',   position: 'GK',  jerseyNumber: 1,  dateOfBirth: '1995-08-30', nationality: 'SK' },
-    { name: 'Filip Sedlák',   position: 'MID', jerseyNumber: 7,  dateOfBirth: '2001-05-12', nationality: 'SK' },
-    { name: 'Dávid Polák',    position: 'FWD', jerseyNumber: 11, dateOfBirth: '1998-09-25', nationality: 'SK' },
+  '1': [ // FK Humenné
+    { name: 'Juraj Baláž',      position: 'FWD', jerseyNumber: 9,  dateOfBirth: '1997-03-14', nationality: 'SK' },
+    { name: 'Róbert Pál',       position: 'MID', jerseyNumber: 8,  dateOfBirth: '1999-07-22', nationality: 'SK' },
+    { name: 'Miroslav Hudák',   position: 'DEF', jerseyNumber: 5,  dateOfBirth: '1996-11-05', nationality: 'SK' },
+    { name: 'Peter Rusnák',     position: 'DEF', jerseyNumber: 3,  dateOfBirth: '2000-01-18', nationality: 'SK' },
+    { name: 'Lukáš Takáč',     position: 'GK',  jerseyNumber: 1,  dateOfBirth: '1995-08-30', nationality: 'SK' },
+    { name: 'Filip Sedlák',     position: 'MID', jerseyNumber: 7,  dateOfBirth: '2001-05-12', nationality: 'SK' },
+    { name: 'Dávid Polák',      position: 'FWD', jerseyNumber: 11, dateOfBirth: '1998-09-25', nationality: 'SK' },
   ],
-  '2': [ // MFK Vranov nad Topľou
-    { name: 'Tomáš Novák',    position: 'FWD', jerseyNumber: 10, dateOfBirth: '1998-04-02', nationality: 'SK' },
-    { name: 'Michal Baláž',   position: 'MID', jerseyNumber: 6,  dateOfBirth: '2000-12-17', nationality: 'SK' },
-    { name: 'Vladimír Gajdoš',position: 'DEF', jerseyNumber: 4,  dateOfBirth: '1997-06-08', nationality: 'SK' },
-    { name: 'Ján Sloboda',    position: 'GK',  jerseyNumber: 1,  dateOfBirth: '1994-02-14', nationality: 'SK' },
-    { name: 'Richard Štefan', position: 'FWD', jerseyNumber: 9,  dateOfBirth: '2002-08-19', nationality: 'SK' },
-    { name: 'Martin Horváth', position: 'DEF', jerseyNumber: 2,  dateOfBirth: '1999-03-31', nationality: 'SK' },
+  '8': [ // FC Košice B
+    { name: 'Lukáš Horváth',   position: 'FWD', jerseyNumber: 9,  dateOfBirth: '2001-11-14', nationality: 'SK' },
+    { name: 'Patrik Kováčik',  position: 'MID', jerseyNumber: 8,  dateOfBirth: '2003-05-07', nationality: 'SK' },
+    { name: 'Adam Tóth',       position: 'DEF', jerseyNumber: 5,  dateOfBirth: '2002-09-23', nationality: 'SK' },
+    { name: 'Štefan Molnár',   position: 'GK',  jerseyNumber: 1,  dateOfBirth: '2000-07-16', nationality: 'SK' },
+    { name: 'Maroš Blaho',     position: 'MID', jerseyNumber: 7,  dateOfBirth: '2002-12-01', nationality: 'SK' },
+    { name: 'Marek Kováč',     position: 'FWD', jerseyNumber: 10, dateOfBirth: '1999-04-17', nationality: 'SK' },
   ],
-  '7': [ // FC Košice B
-    { name: 'Lukáš Horváth',  position: 'FWD', jerseyNumber: 9,  dateOfBirth: '2001-11-14', nationality: 'SK' },
-    { name: 'Patrik Kováčik', position: 'MID', jerseyNumber: 8,  dateOfBirth: '2003-05-07', nationality: 'SK' },
-    { name: 'Adam Tóth',      position: 'DEF', jerseyNumber: 5,  dateOfBirth: '2002-09-23', nationality: 'SK' },
-    { name: 'Štefan Molnár',  position: 'GK',  jerseyNumber: 1,  dateOfBirth: '2000-07-16', nationality: 'SK' },
-    { name: 'Maroš Blaho',    position: 'MID', jerseyNumber: 7,  dateOfBirth: '2002-12-01', nationality: 'SK' },
+  '10': [ // MFK Vranov nad Topľou
+    { name: 'Tomáš Novák',     position: 'FWD', jerseyNumber: 10, dateOfBirth: '1998-04-02', nationality: 'SK' },
+    { name: 'Michal Baláž',    position: 'MID', jerseyNumber: 6,  dateOfBirth: '2000-12-17', nationality: 'SK' },
+    { name: 'Vladimír Gajdoš', position: 'DEF', jerseyNumber: 4,  dateOfBirth: '1997-06-08', nationality: 'SK' },
+    { name: 'Ján Sloboda',     position: 'GK',  jerseyNumber: 1,  dateOfBirth: '1994-02-14', nationality: 'SK' },
+    { name: 'Richard Štefan',  position: 'FWD', jerseyNumber: 9,  dateOfBirth: '2002-08-19', nationality: 'SK' },
+    { name: 'Martin Horváth',  position: 'DEF', jerseyNumber: 2,  dateOfBirth: '1999-03-31', nationality: 'SK' },
   ],
 }
 
@@ -170,10 +175,7 @@ await step('rosters', async () => {
   let count = 0
   for (const [clubId, players] of Object.entries(ROSTERS)) {
     const b = writeBatch(db)
-    players.forEach(p => {
-      b.set(doc(collection(db, 'clubs', clubId, 'players')), p)
-      count++
-    })
+    players.forEach(p => { b.set(doc(collection(db, 'clubs', clubId, 'players')), p); count++ })
     await b.commit()
   }
   return count
@@ -183,13 +185,13 @@ await step('rosters', async () => {
 console.log('\n── Fixtures')
 await step('generating schedule', async () => {
   const schedule = buildSchedule()    // 13 rounds
-  const toSeed   = schedule.slice(0, 11) // rounds 1-11
+  const toSeed   = schedule.slice(0, 11)
   const fixtures = []
 
   toSeed.forEach((pairs, ri) => {
     const roundNum = ri + 1
     const date     = ROUND_DATES[ri]
-    const isComp   = roundNum <= 8
+    const isComp   = roundNum <= 2
 
     pairs.forEach(([hi, ai]) => {
       const fx = {
@@ -206,12 +208,9 @@ await step('generating schedule', async () => {
     })
   })
 
-  // Write in batches of 400
   for (let i = 0; i < fixtures.length; i += 400) {
     const b = writeBatch(db)
-    fixtures.slice(i, i + 400).forEach(fx =>
-      b.set(doc(collection(db, 'fixtures')), fx)
-    )
+    fixtures.slice(i, i + 400).forEach(fx => b.set(doc(collection(db, 'fixtures')), fx))
     await b.commit()
   }
   return fixtures.length
@@ -220,51 +219,44 @@ await step('generating schedule', async () => {
 // ── Player stats ───────────────────────────────────────────────────────────
 console.log('\n── Player stats')
 const PLAYER_STATS = [
-  // FK Bardejov
-  { name: 'Marek Kováč',     club: 'FK Bardejov',               season: '2025/26', goals: 10, assists: 3, yellowCards: 1, redCards: 0 },
-  { name: 'Dávid Polák',     club: 'FK Bardejov',               season: '2025/26', goals: 5,  assists: 4, yellowCards: 2, redCards: 0 },
-  { name: 'Filip Sedlák',    club: 'FK Bardejov',               season: '2025/26', goals: 3,  assists: 6, yellowCards: 1, redCards: 0 },
-  { name: 'Rastislav Mináč', club: 'FK Bardejov',               season: '2025/26', goals: 2,  assists: 5, yellowCards: 3, redCards: 0 },
-  { name: 'Jozef Varga',     club: 'FK Bardejov',               season: '2025/26', goals: 1,  assists: 1, yellowCards: 4, redCards: 0 },
-  // MFK Vranov
-  { name: 'Tomáš Novák',     club: 'MFK Vranov nad Topľou',     season: '2025/26', goals: 8,  assists: 2, yellowCards: 2, redCards: 0 },
-  { name: 'Richard Štefan',  club: 'MFK Vranov nad Topľou',     season: '2025/26', goals: 4,  assists: 3, yellowCards: 1, redCards: 1 },
-  { name: 'Michal Baláž',    club: 'MFK Vranov nad Topľou',     season: '2025/26', goals: 2,  assists: 5, yellowCards: 3, redCards: 0 },
   // FC Košice B
-  { name: 'Lukáš Horváth',   club: 'FC Košice B',               season: '2025/26', goals: 7,  assists: 1, yellowCards: 1, redCards: 0 },
-  { name: 'Maroš Blaho',     club: 'FC Košice B',               season: '2025/26', goals: 3,  assists: 4, yellowCards: 2, redCards: 0 },
-  { name: 'Patrik Kováčik',  club: 'FC Košice B',               season: '2025/26', goals: 2,  assists: 3, yellowCards: 4, redCards: 0 },
+  { name: 'Marek Kováč',     club: 'FC Košice B',          season: '2025/26', goals: 3, assists: 1, yellowCards: 0, redCards: 0 },
+  { name: 'Lukáš Horváth',   club: 'FC Košice B',          season: '2025/26', goals: 2, assists: 2, yellowCards: 1, redCards: 0 },
+  { name: 'Maroš Blaho',     club: 'FC Košice B',          season: '2025/26', goals: 1, assists: 1, yellowCards: 0, redCards: 0 },
   // FK Humenné
-  { name: 'Juraj Baláž',     club: 'FK Humenné',                season: '2025/26', goals: 6,  assists: 2, yellowCards: 2, redCards: 0 },
-  { name: 'Róbert Pál',      club: 'FK Humenné',                season: '2025/26', goals: 2,  assists: 1, yellowCards: 5, redCards: 0 },
-  // TJ Slavoj Trebišov
-  { name: 'Peter Šimko',     club: 'TJ Slavoj Trebišov',        season: '2025/26', goals: 5,  assists: 2, yellowCards: 3, redCards: 0 },
-  { name: 'Miroslav Kňaze',  club: 'TJ Slavoj Trebišov',        season: '2025/26', goals: 2,  assists: 3, yellowCards: 1, redCards: 0 },
-  // FK Gelnica
-  { name: 'Ondrej Fecko',    club: 'FK Gelnica',                season: '2025/26', goals: 4,  assists: 1, yellowCards: 2, redCards: 0 },
-  // FK Sabinov
-  { name: 'Tibor Kočiš',     club: 'FK Sabinov',                season: '2025/26', goals: 3,  assists: 2, yellowCards: 2, redCards: 0 },
-  // TJ Spišská Nová Ves
-  { name: 'Marcel Olejník',  club: 'TJ Spišská Nová Ves',       season: '2025/26', goals: 3,  assists: 1, yellowCards: 4, redCards: 1 },
-  // TJ Sokol Stará Ľubovňa
-  { name: 'Anton Demčák',    club: 'TJ Sokol Stará Ľubovňa',   season: '2025/26', goals: 2,  assists: 2, yellowCards: 3, redCards: 0 },
-  // FK Rešov
-  { name: 'Igor Ragan',      club: 'FK Rešov',                  season: '2025/26', goals: 2,  assists: 0, yellowCards: 5, redCards: 1 },
-  // MFK Michalovce B
-  { name: 'Norbert Takács',  club: 'MFK Michalovce B',          season: '2025/26', goals: 2,  assists: 1, yellowCards: 2, redCards: 0 },
-  // TJ Dynamo Prešov
-  { name: 'Ľuboš Šofranko',  club: 'TJ Dynamo Prešov',          season: '2025/26', goals: 1,  assists: 1, yellowCards: 3, redCards: 0 },
-  // TJ Čeľovce
-  { name: 'Stanislav Bača',  club: 'TJ Čeľovce',               season: '2025/26', goals: 1,  assists: 0, yellowCards: 4, redCards: 1 },
-  // TJ Partizán BNV
-  { name: 'Ján Hudák',       club: 'TJ Partizán Bardejovská Nová Ves', season: '2025/26', goals: 1, assists: 2, yellowCards: 2, redCards: 0 },
+  { name: 'Juraj Baláž',     club: 'FK Humenné',           season: '2025/26', goals: 2, assists: 1, yellowCards: 1, redCards: 0 },
+  { name: 'Dávid Polák',     club: 'FK Humenné',           season: '2025/26', goals: 1, assists: 2, yellowCards: 0, redCards: 0 },
+  // MFK Vranov nad Topľou
+  { name: 'Tomáš Novák',     club: 'MFK Vranov nad Topľou', season: '2025/26', goals: 2, assists: 0, yellowCards: 0, redCards: 0 },
+  { name: 'Richard Štefan',  club: 'MFK Vranov nad Topľou', season: '2025/26', goals: 1, assists: 1, yellowCards: 1, redCards: 0 },
+  // FK Poprad
+  { name: 'Peter Šimko',     club: 'FK Poprad',            season: '2025/26', goals: 2, assists: 1, yellowCards: 1, redCards: 0 },
+  { name: 'Ondrej Fecko',    club: 'FK Poprad',            season: '2025/26', goals: 1, assists: 0, yellowCards: 2, redCards: 0 },
+  // ŠK Odeva Lipany
+  { name: 'Marcel Olejník',  club: 'ŠK Odeva Lipany',     season: '2025/26', goals: 1, assists: 2, yellowCards: 0, redCards: 0 },
+  // FK Spišská Nová Ves
+  { name: 'Igor Ragan',      club: 'FK Spišská Nová Ves',  season: '2025/26', goals: 1, assists: 1, yellowCards: 1, redCards: 0 },
+  // MFK Snina
+  { name: 'Norbert Takács',  club: 'MFK Snina',            season: '2025/26', goals: 1, assists: 0, yellowCards: 1, redCards: 0 },
+  // 1. MFK Kežmarok
+  { name: 'Stanislav Bača',  club: '1. MFK Kežmarok',      season: '2025/26', goals: 1, assists: 0, yellowCards: 2, redCards: 0 },
+  // MFK Spartak Medzev
+  { name: 'Ján Hudák',       club: 'MFK Spartak Medzev',   season: '2025/26', goals: 0, assists: 1, yellowCards: 1, redCards: 0 },
+  // MŠK Tesla Stropkov
+  { name: 'Anton Demčák',    club: 'MŠK Tesla Stropkov',   season: '2025/26', goals: 0, assists: 1, yellowCards: 1, redCards: 0 },
+  // MFK Slovan Sabinov
+  { name: 'Tibor Kočiš',     club: 'MFK Slovan Sabinov',   season: '2025/26', goals: 0, assists: 0, yellowCards: 2, redCards: 0 },
+  // FC Lokomotíva Košice
+  { name: 'Miroslav Kňaze',  club: 'FC Lokomotíva Košice', season: '2025/26', goals: 0, assists: 1, yellowCards: 0, redCards: 0 },
+  // OFK SIM Raslavice
+  { name: 'Ľuboš Šofranko',  club: 'OFK SIM Raslavice',    season: '2025/26', goals: 0, assists: 0, yellowCards: 1, redCards: 0 },
+  // MŠK Spišské Podhradie
+  { name: 'Vladimír Valko',  club: 'MŠK Spišské Podhradie', season: '2025/26', goals: 0, assists: 0, yellowCards: 1, redCards: 0 },
 ]
 
 await step('player_stats', async () => {
   const b = writeBatch(db)
-  PLAYER_STATS.forEach(p =>
-    b.set(doc(collection(db, 'player_stats')), p)
-  )
+  PLAYER_STATS.forEach(p => b.set(doc(collection(db, 'player_stats')), p))
   await b.commit()
   return PLAYER_STATS.length
 })
@@ -273,48 +265,48 @@ await step('player_stats', async () => {
 console.log('\n── News')
 const NEWS = [
   {
-    title: 'Bardejov potvrdil pozíciu lídra tabuľky',
-    slug: 'bardejov-potrdil-poziciu-lidera-tabulky',
-    excerpt: 'FK Bardejov zvíťazil v 8. kole nad FK Humenné 2:1 a s 22 bodmi vedie tabuľku TIPOS III. ligy Východ. Autor oboch gólov Marek Kováč s 10 gólmi ovláda tabuľku strelcov.',
-    content: '<p>FK Bardejov zvíťazil v nedeľňajšom dueli 8. kola nad FK Humenné 2:1 a upevnil svoje vedúce postavenie v tabuľke TIPOS III. ligy Východ.</p><p>Oba góly domácich strelil kanonír Marek Kováč, ktorý sa tak dostal na desať presných zásahov v sezóne a výrazne vedie tabuľku strelcov ligy.</p><p>Bardejov má po ôsmich odohraných kolách 22 bodov a na druhý Vranov stráca sedem bodov.</p>',
-    category: 'výsledky', club: 'FK Bardejov',
-    publishedAt: Timestamp.fromDate(new Date('2025-09-28')),
+    title: 'Košice B ovládli úvod sezóny',
+    slug: 'kosice-b-ovladli-uvod-sezony',
+    excerpt: 'FC Košice B suverénne zvládli prvé dve kolá TIPOS III. ligy Východ a vedú tabuľku s plným počtom bodov.',
+    content: '<p>FC Košice B predviedli v prvých dvoch kolách presvedčivý futbal a suverénne vedú tabuľku TIPOS III. ligy Východ. Ich kanonír Marek Kováč je s troma gólmi na čele tabuľky strelcov.</p>',
+    category: 'výsledky', club: 'FC Košice B',
+    publishedAt: Timestamp.fromDate(new Date('2025-08-23')),
     active: true,
   },
   {
-    title: 'Vranov rozdrtil Sabinov 3:0',
-    slug: 'vranov-rozdrtil-sabinov-3-0',
-    excerpt: 'MFK Vranov nad Topľou predviedol dominantný výkon a porazil FK Sabinov 3:0. Tomáš Novák pridal dva góly a je druhý v tabuľke strelcov so 8 presným zásahmi.',
-    content: '<p>MFK Vranov nad Topľou sa v 8. kole výrazne postaral o body. Favorit pred vlastnými fanúšikmi porazil FK Sabinov 3:0.</p><p>Tomáš Novák strelil dva góly a Richard Štefan pridal tretí. Vranov zostáva na druhom mieste tabuľky s 15 bodmi.</p>',
+    title: 'Vranov vyhral debut na vlastnom štadióne',
+    slug: 'vranov-vyhral-debut-na-vlastnom-stadione',
+    excerpt: 'MFK Vranov nad Topľou odštartoval sezónu víťazstvom pred vlastnými fanúšikmi. Tomáš Novák strelil oba góly tímu.',
+    content: '<p>MFK Vranov nad Topľou vyhral v 1. kole a Tomáš Novák sa postaral o oba góly tímu. Vranov patrí k favoritom sezóny.</p>',
     category: 'výsledky', club: 'MFK Vranov nad Topľou',
-    publishedAt: Timestamp.fromDate(new Date('2025-09-28')),
+    publishedAt: Timestamp.fromDate(new Date('2025-08-16')),
     active: true,
   },
   {
-    title: 'Program 9. kola: Prvý jesenný test',
-    slug: 'program-9-kola-prvy-jesenný-test',
-    excerpt: 'Deviate kolo TIPOS III. ligy Východ prinesie zaujímavé súboje. Kľúčovým zápasom bude duel Košíc B s Humenným, kde sa stretnú dva tímy bojujúce o Top 4.',
-    content: '<p>Nadchádzajúce 9. kolo prinesie fanúšikom zaujímavý futbal. Odohrajú sa všetky stretnutia v nedeľu 5. októbra 2025 o 16:30.</p><p>Najsledovanejším zápasom bude duel FC Košice B vs. FK Humenné, kde oba tímy bojujú o udržanie kontaktu s vedúcim Bardejovom.</p>',
+    title: 'Program 3. kola: Prvé dôležité duely',
+    slug: 'program-3-kola-prve-dolezite-duely',
+    excerpt: 'Tretie kolo TIPOS III. ligy Východ prinesie prvé súboje medzi priamymi konkurentmi. Na programe sú zaujímavé stretnutia.',
+    content: '<p>Tretie kolo sezóny 2025/26 sa odohrá 29. augusta 2025. Fanúšikovia sa môžu tešiť na niekoľko zaujímavých súbojov.</p>',
     category: 'program', club: 'Liga',
-    publishedAt: Timestamp.fromDate(new Date('2025-10-03')),
+    publishedAt: Timestamp.fromDate(new Date('2025-08-26')),
     active: true,
   },
   {
-    title: 'Kováč: "Chceme vyhrať ligu bez zaváhania"',
-    slug: 'kovac-chceme-vyhrat-ligu-bez-zavania',
-    excerpt: 'Kanonír FK Bardejov Marek Kováč sa po víťazstve nad Humenným vyjadril k ambíciám tímu na túto sezónu. Lídrom tabuľky strelcov nechýba sebavedomie.',
-    content: '<p>Marek Kováč je po ôsmich kolách jednoznačne najlepší strelec ligy s desiatimi gólmi. Po zápase s Humenným sme sa ho opýtali na ambície tímu.</p><p><em>"Tím je v skvelej forme a všetci veríme, že táto sezóna bude naša. Chceme vyhrať ligu bez zaváhania a postúpiť do druhej ligy,"</em> povedal s úsmevom Kováč.</p>',
-    category: 'rozhovor', club: 'FK Bardejov',
-    publishedAt: Timestamp.fromDate(new Date('2025-09-29')),
+    title: 'Humenné prekvapením 2. kola',
+    slug: 'humenne-prekvapenim-2-kola',
+    excerpt: 'FK Humenné zvíťazili v 2. kole a zaradili sa medzi prekvapenia úvodu sezóny. Juraj Baláž strelil víťazný gól.',
+    content: '<p>FK Humenné predviedli výborný výkon v 2. kole a triumfovali zásluhou gólu Juraja Baláža. Tím prekvapuje v úvode sezóny.</p>',
+    category: 'výsledky', club: 'FK Humenné',
+    publishedAt: Timestamp.fromDate(new Date('2025-08-23')),
     active: true,
   },
   {
-    title: 'Disciplinárna komisia udelila pokuty po 7. kole',
-    slug: 'disciplinarna-komisia-udelila-pokuty-po-7-kole',
-    excerpt: 'Disciplinárna komisia TIPOS III. ligy Východ prejednala viaceré priestupky z 7. kola. Celkovo udelila pokuty vo výške 850 €.',
-    content: '<p>Disciplinárna komisia ligy zasadala v utorok a prejednala priestupky z 7. kola súťaže.</p><p>Udelila pokuty trom klubom za nevhodné správanie hráčov a fanúšikov. Súčasne potvrdila jednu karetný trest na jeden zápas.</p>',
+    title: 'Disciplinárna komisia po 2. kole',
+    slug: 'disciplinarna-komisia-po-2-kole',
+    excerpt: 'Disciplinárna komisia TIPOS III. ligy Východ prejednala prvé priestupky sezóny z 2. kola súťaže.',
+    content: '<p>Disciplinárna komisia zasadala po 2. kole a prejednala niekoľko priestupkov. Udelila prvé žlté karty a upozornenia pre sezónu 2025/26.</p>',
     category: 'disciplinárne', club: 'Liga',
-    publishedAt: Timestamp.fromDate(new Date('2025-09-23')),
+    publishedAt: Timestamp.fromDate(new Date('2025-08-25')),
     active: true,
   },
 ]
@@ -329,24 +321,9 @@ await step('articles', async () => {
 // ── Sponsors ───────────────────────────────────────────────────────────────
 console.log('\n── Sponsors')
 const SPONSORS = [
-  {
-    name: 'TIPOS', tier: 'title', order: 1, active: true,
-    website: 'https://tipos.sk',
-    sections: ['homepage','fixtures','standings'],
-    logoUrl: null,
-  },
-  {
-    name: 'Kaufland Slovensko', tier: 'gold', order: 1, active: true,
-    website: 'https://kaufland.sk',
-    sections: ['homepage'],
-    logoUrl: null,
-  },
-  {
-    name: 'RegioJet', tier: 'silver', order: 1, active: true,
-    website: 'https://regiojet.sk',
-    sections: ['homepage'],
-    logoUrl: null,
-  },
+  { name: 'TIPOS',             tier: 'title',  order: 1, active: true, website: 'https://tipos.sk',    sections: ['homepage','fixtures','standings'], logoUrl: null },
+  { name: 'Kaufland Slovensko',tier: 'gold',   order: 1, active: true, website: 'https://kaufland.sk', sections: ['homepage'],                       logoUrl: null },
+  { name: 'RegioJet',          tier: 'silver', order: 1, active: true, website: 'https://regiojet.sk', sections: ['homepage'],                       logoUrl: null },
 ]
 
 await step('sponsors', async () => {
@@ -359,11 +336,11 @@ await step('sponsors', async () => {
 // ── Referees ───────────────────────────────────────────────────────────────
 console.log('\n── Referees')
 const REFEREES = [
-  { name: 'Vladimír Krajči',  grade: 'Regionálna', region: 'Prešov',    phone: '+421 910 111 222', email: 'krajci@sfz.sk',  active: true },
-  { name: 'Ján Beňo',         grade: 'Regionálna', region: 'Košice',    phone: '+421 911 222 333', email: 'beno@sfz.sk',    active: true },
-  { name: 'Miroslav Havrila', grade: 'Oblastná',   region: 'Prešov',    phone: '+421 915 333 444', email: 'havrila@sfz.sk', active: true },
-  { name: 'Tomáš Džunda',     grade: 'Oblastná',   region: 'Košice',    phone: '+421 948 444 555', email: 'dzunda@sfz.sk',  active: true },
-  { name: 'Peter Maník',      grade: 'Regionálna', region: 'Bardejov',  phone: '+421 902 555 666', email: 'manik@sfz.sk',   active: true },
+  { name: 'Vladimír Krajči',  grade: 'Regionálna', region: 'Prešov',   phone: '+421 910 111 222', email: 'krajci@sfz.sk',  active: true },
+  { name: 'Ján Beňo',         grade: 'Regionálna', region: 'Košice',   phone: '+421 911 222 333', email: 'beno@sfz.sk',    active: true },
+  { name: 'Miroslav Havrila', grade: 'Oblastná',   region: 'Prešov',   phone: '+421 915 333 444', email: 'havrila@sfz.sk', active: true },
+  { name: 'Tomáš Džunda',     grade: 'Oblastná',   region: 'Košice',   phone: '+421 948 444 555', email: 'dzunda@sfz.sk',  active: true },
+  { name: 'Peter Maník',      grade: 'Regionálna', region: 'Bardejov', phone: '+421 902 555 666', email: 'manik@sfz.sk',   active: true },
 ]
 
 await step('referees', async () => {
@@ -378,20 +355,12 @@ console.log('\n── Awards')
 const POTM = [
   {
     season: '2025/26', monthKey: 'aug-2025', monthLabel: 'August 2025',
-    playerName: 'Marek Kováč', club: 'FK Bardejov', goals: 4, assists: 1,
-    votes: 312,
-  },
-  {
-    season: '2025/26', monthKey: 'sep-2025', monthLabel: 'September 2025',
-    playerName: 'Tomáš Novák', club: 'MFK Vranov nad Topľou', goals: 4, assists: 2,
-    votes: 287,
+    playerName: 'Marek Kováč', club: 'FC Košice B', goals: 3, assists: 1, votes: 312,
   },
 ]
 
 await step('awards_potm', async () => {
-  for (const p of POTM) {
-    await setDoc(doc(db, 'awards_potm', `2025-26_${p.monthKey}`), p)
-  }
+  for (const p of POTM) await setDoc(doc(db, 'awards_potm', `2025-26_${p.monthKey}`), p)
   return POTM.length
 })
 
