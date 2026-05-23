@@ -31,8 +31,8 @@ export default function RulesSection({ initialData }) {
     pointsDraw:      initialData?.pointsDraw      ?? 1,
     pointsLoss:      initialData?.pointsLoss      ?? 0,
     teamsCount:      initialData?.teamsCount      ?? 14,
-    promotionSpots:  initialData?.promotionSpots  ?? 2,
-    playoffSpots:    initialData?.playoffSpots     ?? 1,
+    promotionSpots:  initialData?.promotionSpots  ?? 3,
+    playoffSpots:    initialData?.playoffSpots     ?? 0,
     relegationSpots: initialData?.relegationSpots ?? 2,
     tiebreakers:     initialData?.tiebreakers     ?? ['gd', 'gf', 'h2h', 'abc'],
   })
