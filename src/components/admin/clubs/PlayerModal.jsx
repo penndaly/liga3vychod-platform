@@ -14,7 +14,7 @@ export const POSITIONS = [
 const LABEL = 'block text-xs font-bold uppercase tracking-widest text-slate-400 mb-1.5'
 const INPUT  = 'w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-yellow-400 transition-colors bg-white'
 
-export default function PlayerModal({ clubId, player, onClose, onSaved }) {
+export default function PlayerModal({ clubId, player, onClose, onSaved, subcollection = 'players' }) {
   const isEdit = Boolean(player?.id)
   const [form, setForm] = useState({
     name:     player?.name     ?? '',
@@ -37,12 +37,12 @@ export default function PlayerModal({ clubId, player, onClose, onSaved }) {
         dob:      form.dob,
       }
       if (isEdit) {
-        await updateDoc(doc(db, 'clubs', String(clubId), 'players', player.id), {
+        await updateDoc(doc(db, 'clubs', String(clubId), subcollection, player.id), {
           ...data, updatedAt: serverTimestamp(),
         })
         toast.success('Hráč aktualizovaný')
       } else {
-        await addDoc(collection(db, 'clubs', String(clubId), 'players'), {
+        await addDoc(collection(db, 'clubs', String(clubId), subcollection), {
           ...data, createdAt: serverTimestamp(),
         })
         toast.success('Hráč pridaný')

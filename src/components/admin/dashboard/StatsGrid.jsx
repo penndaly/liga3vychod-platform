@@ -21,8 +21,8 @@ function StatCard({ label, sublabel, icon: Icon, iconBg, iconColor, value, loadi
 export default function StatsGrid() {
   const { data: fixtures, loading: lf } = useCollection('fixtures')
   const { data: clubs, loading: lc } = useCollection('clubs')
-  const { data: players, loading: lp } = useCollection('players')
-  const { data: matches, loading: lm } = useLiveCollection('matches')
+  const { data: playerStats, loading: lp } = useCollection('player_stats')
+  const { data: matches,     loading: lm } = useLiveCollection('fixtures')
 
   const results = matches.filter((m) => m.status === 'completed').length
   const liveNow = matches.filter((m) => m.status === 'live').length
@@ -59,11 +59,11 @@ export default function StatsGrid() {
       />
       <StatCard
         label="Hráči"
-        sublabel="Registrovaní"
+        sublabel="Záznamy štatistík"
         icon={Users}
         iconBg="bg-purple-50"
         iconColor="text-purple-500"
-        value={players.length}
+        value={playerStats.length}
         loading={lp}
       />
       <StatCard

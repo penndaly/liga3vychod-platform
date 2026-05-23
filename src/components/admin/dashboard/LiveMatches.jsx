@@ -22,7 +22,7 @@ function LiveMatchCard({ match }) {
 }
 
 export default function LiveMatches() {
-  const { data: matches, loading } = useLiveCollection('matches')
+  const { data: matches, loading } = useLiveCollection('fixtures')
   const live = matches.filter((m) => m.status === 'live')
 
   return (

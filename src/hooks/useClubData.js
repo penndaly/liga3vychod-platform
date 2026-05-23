@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { collection, getDocs, doc, getDoc, query, where } from 'firebase/firestore'
+import { collection, doc, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../services/firebase'
-import { CLUBS } from '../data/placeholder'
+import { CLUBS_2025_26 } from '../config/clubs-config'
 import { computeStandings } from '../utils/standings'
 
 export function useClubData(slug) {
@@ -13,48 +13,111 @@ export function useClubData(slug) {
 
   useEffect(() => {
     if (!slug) return
-    const staticClub = CLUBS.find((c) => c.slug === slug)
+
+    const staticClub = CLUBS_2025_26.find((c) => c.slug === slug)
     if (!staticClub) {
       setState((s) => ({ ...s, loading: false, error: 'Klub nenájdený' }))
       return
     }
 
-    let cancelled = false
-    async function load() {
-      try {
-        const [profileSnap, playersSnap, fxSnap, dedSnap, newsSnap, statsSnap] = await Promise.all([
-          getDoc(doc(db, 'clubs', String(staticClub.id))),
-          getDocs(collection(db, 'clubs', String(staticClub.id), 'players')),
-          getDocs(collection(db, 'fixtures')),
-          getDocs(collection(db, 'deductions')),
-          getDocs(query(collection(db, 'news'), where('club', '==', staticClub.name))),
-          getDocs(query(collection(db, 'player_stats'), where('club', '==', staticClub.name))),
-        ])
-        if (cancelled) return
+    const clubIdStr = String(staticClub.id)
+    const unsubs = []
 
-        const allFixtures = fxSnap.docs.map((d) => d.data())
-        const deductions  = dedSnap.docs.map((d) => d.data())
-        const clubFixtures = allFixtures
+    // Shared accumulators so each listener can merge into common state
+    const acc = {
+      profile:     null,
+      players:     [],
+      allFixtures: [],
+      deductions:  [],
+      news:        [],
+      playerStats: [],
+    }
+
+    let initialised = 0
+    const TOTAL = 6
+
+    function push() {
+      initialised++
+      if (initialised < TOTAL) return
+      const clubFixtures = acc.allFixtures
+        .filter((f) => f.home === staticClub.name || f.away === staticClub.name)
+        .sort((a, b) => (a.round ?? 0) - (b.round ?? 0))
+
+      setState({
+        club:        staticClub,
+        profile:     acc.profile,
+        players:     acc.players,
+        fixtures:    clubFixtures,
+        standings:   computeStandings(acc.allFixtures, acc.deductions),
+        news:        acc.news,
+        playerStats: acc.playerStats,
+        loading:     false,
+        error:       null,
+      })
+    }
+
+    function update(key, value) {
+      acc[key] = value
+      if (initialised >= TOTAL) {
+        // Already live — recompute and push update
+        const clubFixtures = acc.allFixtures
           .filter((f) => f.home === staticClub.name || f.away === staticClub.name)
           .sort((a, b) => (a.round ?? 0) - (b.round ?? 0))
-
         setState({
           club:        staticClub,
-          profile:     profileSnap.exists() ? profileSnap.data() : null,
-          players:     playersSnap.docs.map((d) => ({ id: d.id, ...d.data() })),
+          profile:     acc.profile,
+          players:     acc.players,
           fixtures:    clubFixtures,
-          standings:   computeStandings(allFixtures, deductions),
-          news:        newsSnap.docs.map((d) => ({ id: d.id, ...d.data() })),
-          playerStats: statsSnap.docs.map((d) => d.data()),
+          standings:   computeStandings(acc.allFixtures, acc.deductions),
+          news:        acc.news,
+          playerStats: acc.playerStats,
           loading:     false,
           error:       null,
         })
-      } catch (err) {
-        if (!cancelled) setState((s) => ({ ...s, loading: false, error: err.message }))
+      } else {
+        push()
       }
     }
-    load()
-    return () => { cancelled = true }
+
+    function onErr(err) {
+      setState((s) => ({ ...s, loading: false, error: err.message }))
+    }
+
+    // 1. Club profile doc
+    unsubs.push(onSnapshot(doc(db, 'clubs', clubIdStr), (snap) => {
+      update('profile', snap.exists() ? snap.data() : null)
+    }, onErr))
+
+    // 2. Players subcollection
+    unsubs.push(onSnapshot(collection(db, 'clubs', clubIdStr, 'players'), (snap) => {
+      update('players', snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+    }, onErr))
+
+    // 3. All fixtures (needed for full standings computation)
+    unsubs.push(onSnapshot(collection(db, 'fixtures'), (snap) => {
+      update('allFixtures', snap.docs.map((d) => d.data()))
+    }, onErr))
+
+    // 4. Deductions
+    unsubs.push(onSnapshot(collection(db, 'deductions'), (snap) => {
+      update('deductions', snap.docs.map((d) => d.data()))
+    }, onErr))
+
+    // 5. Club news
+    unsubs.push(onSnapshot(
+      query(collection(db, 'news'), where('club', '==', staticClub.name)),
+      (snap) => { update('news', snap.docs.map((d) => ({ id: d.id, ...d.data() }))) },
+      () => { update('news', []) }  // index might be missing — graceful fallback
+    ))
+
+    // 6. Player stats for this club
+    unsubs.push(onSnapshot(
+      query(collection(db, 'player_stats'), where('club', '==', staticClub.name)),
+      (snap) => { update('playerStats', snap.docs.map((d) => d.data())) },
+      () => { update('playerStats', []) }
+    ))
+
+    return () => unsubs.forEach((u) => u())
   }, [slug])
 
   return state

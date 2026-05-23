@@ -1,15 +1,21 @@
+import { useMemo } from 'react'
 import { Trophy } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useCollection } from '../../../hooks/useFirestore'
-import { STANDINGS } from '../../../data/placeholder'
+import { getClubByName } from '../../../config/clubs-config'
+import { computeStandings } from '../../../utils/standings'
 
 const FORM_COLOR = { W: 'bg-green-500', D: 'bg-yellow-400', L: 'bg-red-400' }
 
 export default function DashboardStandings() {
-  const { data, loading } = useCollection('standings')
+  const { data: fixtures,   loading: lf } = useCollection('fixtures')
+  const { data: deductions, loading: ld } = useCollection('deductions')
+  const loading = lf || ld
 
-  // Fall back to placeholder while DB is empty
-  const rows = data.length > 0 ? data.slice(0, 5) : STANDINGS
+  const top5 = useMemo(
+    () => computeStandings(fixtures, deductions).slice(0, 5),
+    [fixtures, deductions]
+  )
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
@@ -20,10 +26,7 @@ export default function DashboardStandings() {
             Tabuľka — Top 5
           </h2>
         </div>
-        <Link
-          to="/admin/standings"
-          className="text-xs text-slate-400 hover:text-slate-700 uppercase tracking-wide transition-colors"
-        >
+        <Link to="/admin/standings" className="text-xs text-slate-400 hover:text-slate-700 uppercase tracking-wide transition-colors">
           Celá →
         </Link>
       </div>
@@ -41,28 +44,37 @@ export default function DashboardStandings() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
-            {rows.map((row) => (
-              <tr key={row.pos} className="hover:bg-slate-50 transition-colors">
-                <td className="py-2.5">
-                  <span
-                    className={`w-5 h-5 flex items-center justify-center text-xs font-black rounded ${
-                      row.pos === 1 ? 'bg-yellow-400 text-slate-950' : 'text-slate-400'
-                    }`}
-                  >
-                    {row.pos}
-                  </span>
-                </td>
-                <td className="py-2.5 font-medium text-slate-800">{row.club}</td>
-                <td className="py-2.5 text-center font-black text-slate-900">{row.pts}</td>
-                <td className="py-2.5">
-                  <div className="flex items-center gap-1 justify-center">
-                    {row.form?.map((r, i) => (
-                      <span key={i} className={`w-3 h-3 rounded-full ${FORM_COLOR[r] ?? 'bg-slate-200'}`} />
-                    ))}
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {top5.map((row) => {
+              const cfg = getClubByName(row.club)
+              return (
+                <tr key={row.pos} className="hover:bg-slate-50 transition-colors">
+                  <td className="py-2.5">
+                    <span className={`w-5 h-5 flex items-center justify-center text-xs font-black rounded ${row.pos === 1 ? 'bg-yellow-400 text-slate-950' : 'text-slate-400'}`}>
+                      {row.pos}
+                    </span>
+                  </td>
+                  <td className="py-2.5">
+                    <div className="flex items-center gap-2">
+                      {cfg && (
+                        <span
+                          className="w-4 h-4 rounded-full shrink-0 inline-flex items-center justify-center text-[7px] font-black text-white"
+                          style={{ background: cfg.color }}
+                        />
+                      )}
+                      <span className="font-medium text-slate-800 truncate">{row.club}</span>
+                    </div>
+                  </td>
+                  <td className="py-2.5 text-center font-black text-slate-900">{row.finalPts}</td>
+                  <td className="py-2.5">
+                    <div className="flex items-center gap-1 justify-center">
+                      {row.form.map((r, i) => (
+                        <span key={i} className={`w-3 h-3 rounded-full ${FORM_COLOR[r] ?? 'bg-slate-200'}`} />
+                      ))}
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       )}

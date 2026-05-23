@@ -1,14 +1,23 @@
 import { useState } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Newspaper, Film, Star, ShoppingBag,
   FileText, Palette, Radio, Share2, Settings,
-  ExternalLink, ChevronDown, Loader, Shield,
+  ExternalLink, Loader, Shield,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useClubData } from '../../hooks/useClubData'
-import { CLUBS_2025_26, getClubBySlug } from '../../config/clubs-config'
+import { getClubBySlug } from '../../config/clubs-config'
+import ClubSwitcher from '../../components/admin/ClubSwitcher'
 import DashboardPanel from '../../components/admin/club/DashboardPanel'
+import RosterPanel    from '../../components/admin/club/RosterPanel'
+import NewsPanel      from '../../components/admin/club/NewsPanel'
+import MediaPanel     from '../../components/admin/club/MediaPanel'
+import SettingsPanel   from '../../components/admin/club/SettingsPanel'
+import BrandingPanel   from '../../components/admin/club/BrandingPanel'
+import SocialPanel     from '../../components/admin/club/SocialPanel'
+import AcademyPanel    from '../../components/admin/club/AcademyPanel'
+import BroadcastPanel  from '../../components/admin/club/BroadcastPanel'
 
 const NAV = [
   { id: 'dashboard', label: 'Dashboard',      icon: LayoutDashboard },
@@ -54,45 +63,6 @@ function ClubBadge({ club, logoUrl, loading }) {
   )
 }
 
-function SwitchClubMenu({ currentSlug }) {
-  const [open, setOpen] = useState(false)
-  const navigate = useNavigate()
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-300 border border-slate-700 rounded-lg px-3 py-1.5 transition-colors"
-      >
-        Prepnúť klub <ChevronDown size={11} />
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-1 z-20 bg-slate-800 border border-slate-700 rounded-xl shadow-xl py-1 min-w-[240px] max-h-72 overflow-y-auto">
-            {CLUBS_2025_26.map((c) => (
-              <button
-                key={c.slug}
-                onClick={() => { navigate(`/admin/clubs/${c.slug}`); setOpen(false) }}
-                className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-3 ${
-                  c.slug === currentSlug
-                    ? 'font-black bg-white/8'
-                    : 'text-slate-300 hover:bg-slate-700/60 font-bold'
-                }`}
-              >
-                <span
-                  className="w-4 h-4 rounded-full shrink-0"
-                  style={{ background: c.color }}
-                />
-                <span className="text-xs text-slate-500 w-8 shrink-0 font-mono">{c.short}</span>
-                <span className={c.slug === currentSlug ? 'text-white' : ''}>{c.name}</span>
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  )
-}
 
 export default function ClubDashboard() {
   const { clubSlug } = useParams()
@@ -188,7 +158,7 @@ export default function ClubDashboard() {
                 <ExternalLink size={11} /> Náhľad
               </a>
             )}
-            {isSuperadmin && <SwitchClubMenu currentSlug={clubSlug} />}
+            {isSuperadmin && <ClubSwitcher currentSlug={clubSlug} />}
           </div>
         </div>
 
@@ -250,6 +220,22 @@ export default function ClubDashboard() {
           <div className="p-6">
             {activeSection === 'dashboard' ? (
               <DashboardPanel data={data} clubColor={clubColor} />
+            ) : activeSection === 'roster' ? (
+              <RosterPanel data={data} clubColor={clubColor} />
+            ) : activeSection === 'news' ? (
+              <NewsPanel data={data} clubColor={clubColor} />
+            ) : activeSection === 'media' ? (
+              <MediaPanel data={data} clubColor={clubColor} />
+            ) : activeSection === 'academy' ? (
+              <AcademyPanel data={data} clubColor={clubColor} />
+            ) : activeSection === 'broadcast' ? (
+              <BroadcastPanel data={data} clubColor={clubColor} />
+            ) : activeSection === 'branding' ? (
+              <BrandingPanel data={data} clubSlug={clubSlug} clubColor={clubColor} />
+            ) : activeSection === 'social' ? (
+              <SocialPanel data={data} clubColor={clubColor} />
+            ) : activeSection === 'settings' ? (
+              <SettingsPanel data={data} clubColor={clubColor} />
             ) : (
               <ComingSoonPanel label={activeNav?.label ?? ''} />
             )}
