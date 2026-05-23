@@ -51,6 +51,12 @@ service cloud.firestore {
       allow write: if isSuperadmin();
     }
 
+    // ── Pre-computed standings — written by Cloud Function, public read ──────
+    match /standings/{doc} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // ── Club and editorial data — editor+ writes ──────────────────────────────
 
     match /clubs/{clubId} {
