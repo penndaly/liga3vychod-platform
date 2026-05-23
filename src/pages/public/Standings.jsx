@@ -4,6 +4,7 @@ import { Trophy, ChevronDown, Minus } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { db } from '../../services/firebase'
 import { CLUBS } from '../../data/placeholder'
+import { getClubByName } from '../../config/clubs-config'
 import { computeStandings } from '../../utils/standings'
 import Navbar from '../../components/public/Navbar'
 import Footer from '../../components/public/Footer'
@@ -16,9 +17,9 @@ const CLUB_ID_MAP = Object.fromEntries(CLUBS.map((c) => [c.name, c.id]))
 function buildZones(rules) {
   const {
     teamsCount      = 14,
-    promotionSpots  = 2,
-    playoffSpots    = 1,
-    relegationSpots = 1,
+    promotionSpots  = 3,
+    playoffSpots    = 0,
+    relegationSpots = 2,
   } = rules ?? {}
   const zones = {}
   for (let i = 1; i <= promotionSpots; i++) zones[i] = 'promotion'
@@ -185,18 +186,33 @@ export default function StandingsPage() {
 
                           {/* Club */}
                           <td className="py-3 px-2">
-                            {clubId ? (
-                              <Link
-                                to={`/kluby/${clubId}`}
-                                className="font-bold text-slate-300 group-hover:text-white hover:text-yellow-400 transition-colors truncate block"
-                              >
-                                {row.club}
-                              </Link>
-                            ) : (
-                              <span className="font-bold text-slate-300 group-hover:text-white transition-colors truncate block">
-                                {row.club}
-                              </span>
-                            )}
+                            {(() => {
+                              const cfg     = getClubByName(row.club)
+                              const badge   = (
+                                <span
+                                  className="inline-flex items-center justify-center w-6 h-6 rounded-full text-[9px] font-black text-white shrink-0"
+                                  style={{ background: cfg?.color ?? '#475569' }}
+                                >
+                                  {cfg?.short ?? row.club.slice(0, 3)}
+                                </span>
+                              )
+                              const name = (
+                                <span className="font-bold text-slate-300 group-hover:text-white transition-colors truncate">
+                                  {row.club}
+                                </span>
+                              )
+                              return clubId ? (
+                                <Link to={`/kluby/${clubId}`} className="flex items-center gap-2 hover:text-yellow-400 transition-colors min-w-0">
+                                  {badge}
+                                  {name}
+                                </Link>
+                              ) : (
+                                <div className="flex items-center gap-2 min-w-0">
+                                  {badge}
+                                  {name}
+                                </div>
+                              )
+                            })()}
                           </td>
 
                           <td className="py-3 px-2 text-center text-slate-400">{row.p}</td>

@@ -36,7 +36,7 @@ export default function ArticlePage() {
     async function load() {
       try {
         const snap = await getDocs(
-          query(collection(db, 'news'), where('slug', '==', slug), where('active', '==', true), limit(1))
+          query(collection(db, 'news'), where('slug', '==', slug), where('status', '==', 'published'), limit(1))
         )
         if (snap.empty) { setNotFound(true); return }
         setArticle({ id: snap.docs[0].id, ...snap.docs[0].data() })

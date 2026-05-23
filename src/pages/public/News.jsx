@@ -107,7 +107,9 @@ export default function NewsPage() {
     async function load() {
       try {
         const snap = await getDocs(
-          query(collection(db, 'news'), where('active', '==', true), orderBy('publishedAt', 'desc'))
+          query(collection(db, 'news'), where('status', '==', 'published'), orderBy('publishedAt', 'desc'))
+        ).catch(() =>
+          getDocs(query(collection(db, 'news'), where('status', '==', 'published')))
         )
         setArticles(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
       } catch {

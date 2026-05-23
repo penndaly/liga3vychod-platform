@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { doc, getDoc, collection, getDocs, query, where, orderBy } from 'firebase/firestore'
+import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore'
 import { ChevronLeft, MapPin, Calendar, Building2, Users } from 'lucide-react'
 import { db } from '../../services/firebase'
 import { CLUBS } from '../../data/placeholder'
@@ -43,14 +43,15 @@ export default function ClubProfile() {
       try {
         const [profileSnap, playersSnap, fixturesSnap] = await Promise.all([
           getDoc(doc(db, 'clubs', String(clubId))),
-          getDocs(query(collection(db, 'clubs', String(clubId), 'players'), orderBy('jerseyNumber'))),
+          getDocs(collection(db, 'clubs', String(clubId), 'players')),
           getDocs(query(
             collection(db, 'fixtures'),
-            where('status', '==', 'finished'),
+            where('status', '==', 'completed'),
           )),
         ])
         setProfile(profileSnap.exists() ? profileSnap.data() : null)
-        setPlayers(playersSnap.docs.map((d) => ({ id: d.id, ...d.data() })))
+        const rawPlayers = playersSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
+        setPlayers(rawPlayers.sort((a, b) => (a.number ?? 99) - (b.number ?? 99)))
         const allFinished = fixturesSnap.docs.map((d) => d.data())
         const clubName = profileSnap.data()?.name ?? staticClub.name
         const relevant = allFinished
@@ -149,9 +150,9 @@ export default function ClubProfile() {
                     <Calendar size={13} className="text-slate-600" /> Zal. {profile.founded}
                   </span>
                 )}
-                {profile.stadium && (
+                {profile.ground && (
                   <span className="flex items-center gap-1.5 text-sm text-slate-400">
-                    <Building2 size={13} className="text-slate-600" /> {profile.stadium}
+                    <Building2 size={13} className="text-slate-600" /> {profile.ground}
                   </span>
                 )}
               </div>

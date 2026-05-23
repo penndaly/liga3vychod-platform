@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore'
 import { ChevronLeft, Target, HelpingHand, BookOpen, Square } from 'lucide-react'
 import { db } from '../../services/firebase'
-import { CLUBS } from '../../data/placeholder'
+import { CLUBS_2025_26 as CLUBS } from '../../config/clubs-config'
 import Navbar from '../../components/public/Navbar'
 import Footer from '../../components/public/Footer'
 
@@ -119,7 +119,7 @@ export default function PlayerProfile() {
               <div className="w-full h-full bg-slate-700 animate-pulse rounded-2xl" />
             ) : (
               <span className="text-2xl font-black text-slate-500">
-                {player?.jerseyNumber ?? '?'}
+                {player?.number ?? '?'}
               </span>
             )}
           </div>
@@ -141,14 +141,14 @@ export default function PlayerProfile() {
                       {POSITION_LABELS[player.position] ?? player.position}
                     </span>
                   )}
-                  {player?.jerseyNumber && (
-                    <span className="text-xs font-bold text-slate-500">#{player.jerseyNumber}</span>
+                  {player?.number && (
+                    <span className="text-xs font-bold text-slate-500">#{player.number}</span>
                   )}
                 </div>
 
                 <div className="flex flex-wrap gap-4 mt-4">
-                  {player?.dateOfBirth && (
-                    <span className="text-sm text-slate-400">{formatDob(player.dateOfBirth)}</span>
+                  {player?.dob && (
+                    <span className="text-sm text-slate-400">{formatDob(player.dob)}</span>
                   )}
                   {player?.nationality && (
                     <span className="text-sm text-slate-500">{player.nationality}</span>
