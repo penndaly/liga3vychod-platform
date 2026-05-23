@@ -174,7 +174,7 @@ export default function Branding() {
 
                   {/* Hover actions */}
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Link to={`/admin/clubs/${club.id}`}
+                    <Link to={`/admin/clubs/${club.id}/edit`}
                       className="p-1 text-slate-400 hover:text-slate-700 transition-colors" title="Upraviť profil">
                       <Upload size={11} />
                     </Link>

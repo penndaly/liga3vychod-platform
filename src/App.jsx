@@ -51,7 +51,7 @@ export default function App() {
         <Route path="/admin/fixtures"    element={<Guard Page={Fixtures}     />} />
         <Route path="/admin/standings"   element={<Guard Page={Standings}    />} />
         <Route path="/admin/clubs"       element={<Guard Page={Clubs}        />} />
-        <Route path="/admin/clubs/:clubId" element={<Guard Page={ClubDetail}  />} />
+        <Route path="/admin/clubs/:clubId/edit" element={<Guard Page={ClubDetail}  />} />
         <Route path="/admin/news"        element={<Guard Page={News}         />} />
         <Route path="/admin/media"           element={<Guard Page={Media}       />} />
         <Route path="/admin/media/:albumId"  element={<Guard Page={MediaAlbum}  />} />
@@ -62,7 +62,7 @@ export default function App() {
         <Route path="/admin/disciplinary" element={<Guard Page={Disciplinary}/>} />
         <Route path="/admin/referees"    element={<Guard Page={Referees}     />} />
         <Route path="/admin/settings"    element={<Guard Page={Settings}     />} />
-        <Route path="/admin/club/:clubSlug" element={<Guard Page={ClubDashboard} />} />
+        <Route path="/admin/clubs/:clubSlug" element={<Guard Page={ClubDashboard} />} />
 
         <Route path="/vysledky" element={<FixturesPage />} />
         <Route path="/tabulka" element={<StandingsPage />} />

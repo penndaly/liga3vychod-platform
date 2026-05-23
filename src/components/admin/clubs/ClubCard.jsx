@@ -21,7 +21,7 @@ export default function ClubCard({ club, firestoreData }) {
 
   return (
     <Link
-      to={`/admin/clubs/${club.id}`}
+      to={`/admin/clubs/${club.id}/edit`}
       className="bg-white border border-slate-100 rounded-xl p-5 hover:border-slate-200 hover:shadow-sm transition-all group flex flex-col gap-3"
     >
       <div className="flex items-start justify-between">

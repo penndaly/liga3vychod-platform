@@ -32,7 +32,7 @@ function SkeletonCard() {
   )
 }
 
-export default function DashboardPanel({ data }) {
+export default function DashboardPanel({ data, clubColor = '#facc15' }) {
   const { club, profile, players, fixtures, standings, news, playerStats, loading } = data
 
   const standing = standings.find((s) => s.club === club?.name)
@@ -75,7 +75,6 @@ export default function DashboardPanel({ data }) {
               value={standing ? `#${standing.pos}` : '—'}
               label="Pozícia"
               color="text-yellow-400"
-              sub={standing?.form?.length ? undefined : undefined}
             />
             <StatCard
               icon={Trophy}
