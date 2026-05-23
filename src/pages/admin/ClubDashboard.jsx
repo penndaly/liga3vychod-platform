@@ -18,6 +18,7 @@ import BrandingPanel   from '../../components/admin/club/BrandingPanel'
 import SocialPanel     from '../../components/admin/club/SocialPanel'
 import AcademyPanel    from '../../components/admin/club/AcademyPanel'
 import BroadcastPanel  from '../../components/admin/club/BroadcastPanel'
+import EShopPanel      from '../../components/admin/club/EShopPanel'
 
 const NAV = [
   { id: 'dashboard', label: 'Dashboard',      icon: LayoutDashboard },
@@ -252,6 +253,8 @@ export default function ClubDashboard() {
               <SocialPanel data={data} clubColor={clubColor} />
             ) : activeSection === 'settings' ? (
               <SettingsPanel data={data} clubColor={clubColor} />
+            ) : activeSection === 'eshop' ? (
+              <EShopPanel data={data} clubColor={clubColor} />
             ) : (
               <ComingSoonPanel label={activeNav?.label ?? ''} />
             )}
