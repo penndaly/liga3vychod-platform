@@ -7,6 +7,7 @@ import ClubsPage from './pages/public/Clubs'
 import ClubProfile from './pages/public/ClubProfile'
 import PlayerProfile from './pages/public/PlayerProfile'
 import FixturesPage from './pages/public/Fixtures'
+import MatchDetail from './pages/public/MatchDetail'
 import StandingsPage from './pages/public/Standings'
 import NewsPage from './pages/public/News'
 import ArticlePage from './pages/public/Article'
@@ -70,6 +71,7 @@ export default function App() {
         <Route path="/admin/import"          element={<Guard Page={BulkImport}      />} />
 
         <Route path="/vysledky" element={<FixturesPage />} />
+        <Route path="/vysledky/:matchId" element={<MatchDetail />} />
         <Route path="/tabulka" element={<StandingsPage />} />
         <Route path="/novinky" element={<NewsPage />} />
         <Route path="/novinky/:slug" element={<ArticlePage />} />

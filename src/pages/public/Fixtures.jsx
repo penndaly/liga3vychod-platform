@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { collection, getDocs } from 'firebase/firestore'
 import { Calendar, Clock, Radio } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { db } from '../../services/firebase'
 import Navbar from '../../components/public/Navbar'
 import Footer from '../../components/public/Footer'
@@ -19,12 +20,13 @@ const TABS = [
 ]
 
 function MatchRow({ match }) {
-  const isScored = match.status === 'completed' || match.status === 'live'
-  const isLive   = match.status === 'live'
-  const homeWon  = isScored && match.homeGoals > match.awayGoals
-  const awayWon  = isScored && match.awayGoals > match.homeGoals
+  const isScored  = match.status === 'completed' || match.status === 'live'
+  const isLive    = match.status === 'live'
+  const homeWon   = isScored && match.homeGoals > match.awayGoals
+  const awayWon   = isScored && match.awayGoals > match.homeGoals
+  const clickable = isScored && match.id
 
-  return (
+  const inner = (
     <div className="flex items-center gap-2 sm:gap-4 px-4 sm:px-6 py-3.5 hover:bg-slate-800/50 transition-colors border-b border-slate-800/60 last:border-0">
 
       {/* Home */}
@@ -74,6 +76,15 @@ function MatchRow({ match }) {
       </div>
     </div>
   )
+
+  if (clickable) {
+    return (
+      <Link to={`/vysledky/${match.id}`} className="block">
+        {inner}
+      </Link>
+    )
+  }
+  return inner
 }
 
 function RoundGroup({ round, matches }) {
@@ -116,7 +127,7 @@ export default function FixturesPage() {
     async function load() {
       try {
         const snap = await getDocs(collection(db, 'fixtures'))
-        setFixtures(snap.docs.map((d) => d.data()))
+        setFixtures(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
       } catch {
         // silently fail
       } finally {
