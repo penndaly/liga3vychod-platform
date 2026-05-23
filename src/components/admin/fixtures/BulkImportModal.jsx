@@ -8,9 +8,9 @@ import { CLUBS } from '../../../data/placeholder'
 const CLUB_NAMES = new Set(CLUBS.map((c) => c.name))
 
 const TEMPLATE = `kolo,domaci,hostia,datum,cas
-1,FK Bardejov,MFK Vranov nad Topľou,2.8.2025,16:30
-1,FC Košice B,FK Humenné,2.8.2025,16:30
-2,FK Sabinov,FK Bardejov,9.8.2025,16:30`
+1,FK Humenné,FC Košice B,10.8.2025,16:30
+1,FK Poprad,MFK Vranov nad Topľou,10.8.2025,16:30
+2,MFK Slovan Sabinov,FK Humenné,17.8.2025,16:30`
 
 function parseCSV(text) {
   const lines = text.trim().split('\n').filter((l) => l.trim())
@@ -103,7 +103,7 @@ export default function BulkImportModal({ onClose, onSaved }) {
               {TEMPLATE}
             </pre>
             <p className="text-xs text-slate-400 mt-2">
-              Názvy tímov musia zodpovedať presne názvom 14 klubov (napr. <code className="font-mono bg-slate-100 px-1 rounded">FK Bardejov</code>).
+              Názvy tímov musia zodpovedať presne názvom 14 klubov (napr. <code className="font-mono bg-slate-100 px-1 rounded">FK Humenné</code>).
             </p>
           </div>
 
