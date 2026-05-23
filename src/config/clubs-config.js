@@ -15,6 +15,12 @@ export const CLUBS_2025_26 = [
   { id: 14, name: 'MŠK Spišské Podhradie',   short: 'SPP', slug: 'spisske-podhradie' },
 ]
 
+/** Set of all valid club names — use for O(1) validation. */
+export const VALID_CLUB_NAMES = new Set(CLUBS_2025_26.map((c) => c.name))
+
+/** Ordered array of club names — use for dropdowns and option lists. */
+export const CLUB_NAME_LIST = CLUBS_2025_26.map((c) => c.name)
+
 /** Look up a club entry by its URL slug. Returns undefined if not found. */
 export function getClubBySlug(slug) {
   return CLUBS_2025_26.find((c) => c.slug === slug)

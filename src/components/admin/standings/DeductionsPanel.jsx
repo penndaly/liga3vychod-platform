@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { Trash2, AlertTriangle } from 'lucide-react'
 import { toast } from 'react-hot-toast'
-import { CLUBS } from '../../../data/placeholder'
+import { CLUB_NAME_LIST } from '../../../config/clubs-config'
 import { createDocument, deleteDocument } from '../../../services/api'
 
 const LABEL = 'block text-xs font-bold uppercase tracking-widest text-slate-400 mb-1.5'
 const INPUT  = 'w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-yellow-400 transition-colors bg-white'
 
-const CLUB_NAMES = CLUBS.map((c) => c.name)
+const CLUB_NAMES = CLUB_NAME_LIST
 
 export default function DeductionsPanel({ deductions, season, onSaved }) {
   const [form, setForm] = useState({ club: '', points: '', reason: '', date: '' })

@@ -2,13 +2,13 @@ import { useState } from 'react'
 import { X } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { ROLES } from '../../../data/roles'
-import { CLUBS } from '../../../data/placeholder'
+import { CLUB_NAME_LIST } from '../../../config/clubs-config'
 import { updateDocument } from '../../../services/api'
 
 const LABEL = 'block text-xs font-bold uppercase tracking-widest text-slate-400 mb-1.5'
 const INPUT  = 'w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-yellow-400 transition-colors bg-white'
 
-const CLUB_NAMES = CLUBS.map((c) => c.name)
+const CLUB_NAMES = CLUB_NAME_LIST
 
 export default function UserModal({ user, onClose, onSaved }) {
   const [form, setForm] = useState({

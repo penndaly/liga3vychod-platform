@@ -8,7 +8,7 @@ import ClubPill from '../../components/admin/users/ClubPill'
 import UserModal from '../../components/admin/users/UserModal'
 import PermissionMatrix from '../../components/admin/users/PermissionMatrix'
 import { ROLES } from '../../data/roles'
-import { CLUBS } from '../../data/placeholder'
+import { CLUB_NAME_LIST } from '../../config/clubs-config'
 import { fetchCollection, deleteDocument } from '../../services/api'
 import { createFirebaseUser } from '../../services/adminAuth'
 import { useAuth } from '../../hooks/useAuth'
@@ -223,7 +223,7 @@ function RolesTab({ users }) {
 
 function CreateTab({ onCreated }) {
   const { user: currentUser } = useAuth()
-  const CLUB_NAMES = CLUBS.map((c) => c.name)
+  const CLUB_NAMES = CLUB_NAME_LIST
 
   const [form, setForm] = useState({
     name:  '',

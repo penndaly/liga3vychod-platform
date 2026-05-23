@@ -3,9 +3,9 @@ import { X, Upload, CheckCircle, AlertCircle } from 'lucide-react'
 import { writeBatch, doc, collection, serverTimestamp } from 'firebase/firestore'
 import { toast } from 'react-hot-toast'
 import { db } from '../../../services/firebase'
-import { CLUBS } from '../../../data/placeholder'
+import { VALID_CLUB_NAMES } from '../../../config/clubs-config'
 
-const CLUB_NAMES = new Set(CLUBS.map((c) => c.name))
+const CLUB_NAMES = VALID_CLUB_NAMES
 
 const TEMPLATE = `kolo,domaci,hostia,datum,cas
 1,FK Humenné,FC Košice B,10.8.2025,16:30
