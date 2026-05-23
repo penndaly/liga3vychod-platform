@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, Navigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Newspaper, Film, Star, ShoppingBag,
   FileText, Palette, Radio, Share2, Settings,
-  ExternalLink, Loader, Shield,
+  ExternalLink, Loader, Shield, Lock,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useClubData } from '../../hooks/useClubData'
@@ -66,7 +66,7 @@ function ClubBadge({ club, logoUrl, loading }) {
 
 export default function ClubDashboard() {
   const { clubSlug } = useParams()
-  const { isSuperadmin } = useAuth()
+  const { isSuperadmin, userData, loading: authLoading } = useAuth()
   const [activeSection, setActiveSection] = useState('dashboard')
 
   const data = useClubData(clubSlug)
@@ -79,6 +79,39 @@ export default function ClubDashboard() {
   const clubName   = profile?.name ?? club?.name ?? ''
   const standing   = data.standings.find((s) => s.club === clubName)
   const pubClubId  = club?.id
+
+  // ── Access guard ─────────────────────────────────────────────────────
+  // Wait for auth to resolve before checking. Show nothing to avoid flicker.
+  if (authLoading) return null
+
+  // Superadmin has unrestricted access. Club admins may only enter clubs
+  // listed in their userData.clubs array (stored as full club names).
+  const userClubs = userData?.clubs ?? []
+  const hasAccess = isSuperadmin || (configClub && userClubs.includes(configClub.name))
+
+  if (!hasAccess) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
+        <div className="text-center space-y-4 max-w-sm">
+          <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto">
+            <Lock size={24} className="text-red-500" />
+          </div>
+          <p className="text-white font-black text-lg">Prístup zamietnutý</p>
+          <p className="text-slate-500 text-sm">
+            Nemáte oprávnenie spravovať klub{' '}
+            <span className="text-yellow-400 font-bold">{configClub?.name ?? clubSlug}</span>.
+          </p>
+          <Link
+            to="/admin"
+            className="inline-block mt-2 px-5 py-2.5 bg-yellow-400 text-slate-950 text-xs font-black uppercase tracking-widest rounded-lg hover:bg-yellow-300 transition-colors"
+          >
+            ← Dashboard
+          </Link>
+        </div>
+      </div>
+    )
+  }
+  // ─────────────────────────────────────────────────────────────────────
 
   if (!loading && error) {
     return (

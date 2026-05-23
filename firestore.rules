@@ -6,117 +6,126 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // ── Public league data ────────────────────────────────────────────
-    // Anyone can read season/league display settings; only admins write.
-    match /settings/{doc} {
-      allow read: if true;
-      allow write: if isAuth();
+    // Reads the requesting user's role from Firestore.
+    // Falls back to 'VIEWER' if the user has no record — denies all writes.
+    function userRole() {
+      return isAuth()
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'VIEWER')
+        : 'NONE';
     }
 
-    // Full fixture list is public (standings, results, programme pages).
+    // Only the league superadmin can manage fixtures, standings config, and platform settings.
+    function isSuperadmin() {
+      return userRole() == 'SUPERADMIN';
+    }
+
+    // Club admins and editors can manage club-scoped content (rosters, news, media, stats).
+    function isEditor() {
+      return userRole() in ['SUPERADMIN', 'CLUB_ADMIN', 'EDITOR'];
+    }
+
+    // ── League-level data — superadmin writes only ────────────────────────────
+
     match /fixtures/{doc} {
       allow read: if true;
-      allow write: if isAuth();
+      allow write: if isSuperadmin();
     }
 
-    // Points deductions are public (shown in standings table).
     match /deductions/{doc} {
       allow read: if true;
-      allow write: if isAuth();
+      allow write: if isSuperadmin();
     }
 
-    // Club profiles and rosters are public.
+    match /settings/{doc} {
+      allow read: if true;
+      allow write: if isSuperadmin();
+    }
+
+    match /sponsors/{doc} {
+      allow read: if true;
+      allow write: if isSuperadmin();
+    }
+
+    match /referees/{doc} {
+      allow read: if true;
+      allow write: if isSuperadmin();
+    }
+
+    // ── Club and editorial data — editor+ writes ──────────────────────────────
+
     match /clubs/{clubId} {
       allow read: if true;
-      allow write: if isAuth();
+      allow write: if isEditor();
 
       match /players/{playerId} {
         allow read: if true;
-        allow write: if isAuth();
+        allow write: if isEditor();
       }
     }
 
-    // Player stats drive the public leaderboards.
     match /player_stats/{doc} {
       allow read: if true;
-      allow write: if isAuth();
+      allow write: if isEditor();
     }
 
-    // Awards (Player of the Month) are public.
     match /awards_potm/{doc} {
       allow read: if true;
-      allow write: if isAuth();
+      allow write: if isEditor();
     }
 
-    // Media albums and items are public.
+    // Unauthenticated clients may only read published articles.
+    match /news/{doc} {
+      allow read: if resource.data.status == 'published' || isAuth();
+      allow write: if isEditor();
+    }
+
     match /media_albums/{albumId} {
       allow read: if true;
-      allow write: if isAuth();
+      allow write: if isEditor();
 
       match /items/{itemId} {
         allow read: if true;
-        allow write: if isAuth();
+        allow write: if isEditor();
       }
     }
 
-    // Referees — basic registry is public; operational sub-data is admin-only.
-    match /referees/{doc} {
-      allow read: if true;
-      allow write: if isAuth();
+    // ── Admin-only collections — superadmin reads and writes ──────────────────
+
+    match /disciplinary_suspensions/{doc} {
+      allow read, write: if isSuperadmin();
     }
 
-    // ── Filtered public reads ─────────────────────────────────────────
-    // News: unauthenticated clients may only read published articles.
-    match /news/{doc} {
-      allow read: if resource.data.status == 'published' || isAuth();
-      allow write: if isAuth();
-    }
-
-    // Sponsors: all sponsors are public (footer filters by tier in the query).
-    match /sponsors/{doc} {
-      allow read: if true;
-      allow write: if isAuth();
-    }
-
-    // Academy subcollections are public (youth rosters).
-    match /clubs/{clubId}/{subcollection}/{playerId} {
-      allow read: if true;
-      allow write: if isAuth();
-    }
-
-    // ── Admin-only collections ────────────────────────────────────────
-    // Disciplinary records are sensitive; no public access.
-    match /suspensions/{doc} {
-      allow read, write: if isAuth();
-    }
-
-    match /fines/{doc} {
-      allow read, write: if isAuth();
+    match /disciplinary_fines/{doc} {
+      allow read, write: if isSuperadmin();
     }
 
     match /disciplinary_decisions/{doc} {
-      allow read, write: if isAuth();
+      allow read, write: if isSuperadmin();
     }
 
-    // Referee operational data is internal.
     match /referee_assignments/{doc} {
-      allow read, write: if isAuth();
+      allow read, write: if isSuperadmin();
     }
 
     match /referee_availability/{doc} {
-      allow read, write: if isAuth();
+      allow read, write: if isSuperadmin();
     }
 
     match /referee_ratings/{doc} {
-      allow read, write: if isAuth();
+      allow read, write: if isSuperadmin();
     }
 
-    // User records are admin-only.
-    match /users/{doc} {
-      allow read, write: if isAuth();
+    // ── User management ───────────────────────────────────────────────────────
+    // A user can always read their own record (needed by useAuth to resolve the role).
+    // Superadmin can read and write all user records.
+    // Writes to own record are intentionally excluded — user profiles are managed
+    // by superadmin only to prevent privilege escalation.
+    match /users/{userId} {
+      allow read: if isAuth() && request.auth.uid == userId;
+      allow read, write: if isSuperadmin();
     }
 
-    // ── Deny everything else ──────────────────────────────────────────
+    // ── Deny everything else ──────────────────────────────────────────────────
     match /{document=**} {
       allow read, write: if false;
     }

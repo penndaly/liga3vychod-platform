@@ -39,6 +39,15 @@ function ProtectedRoute({ children }) {
   return user ? children : <Navigate to="/admin/login" replace />
 }
 
+// Requires an authenticated SUPERADMIN — redirects others to /admin.
+function SuperadminRoute({ Page }) {
+  const { user, userData, loading } = useAuth()
+  if (loading) return null
+  if (!user) return <Navigate to="/admin/login" replace />
+  if (userData?.role !== 'SUPERADMIN') return <Navigate to="/admin" replace />
+  return <Page />
+}
+
 function Guard({ Page }) {
   return <ProtectedRoute><Page /></ProtectedRoute>
 }
@@ -51,24 +60,28 @@ export default function App() {
         <Route path="/" element={<Home />} />
 
         <Route path="/admin/login" element={<Login />} />
-        <Route path="/admin"             element={<Guard Page={Dashboard}    />} />
-        <Route path="/admin/fixtures"    element={<Guard Page={Fixtures}     />} />
-        <Route path="/admin/standings"   element={<Guard Page={Standings}    />} />
-        <Route path="/admin/clubs"       element={<Guard Page={Clubs}        />} />
-        <Route path="/admin/clubs/:clubId/edit" element={<Guard Page={ClubDetail}  />} />
-        <Route path="/admin/news"        element={<Guard Page={News}         />} />
-        <Route path="/admin/media"           element={<Guard Page={Media}       />} />
-        <Route path="/admin/media/:albumId"  element={<Guard Page={MediaAlbum}  />} />
-        <Route path="/admin/users"       element={<Guard Page={Users}        />} />
-        <Route path="/admin/branding"    element={<Guard Page={Branding}     />} />
-        <Route path="/admin/sponsors"    element={<Guard Page={Sponsors}     />} />
-        <Route path="/admin/awards"      element={<Guard Page={Awards}       />} />
-        <Route path="/admin/disciplinary" element={<Guard Page={Disciplinary}/>} />
-        <Route path="/admin/referees"    element={<Guard Page={Referees}     />} />
-        <Route path="/admin/settings"    element={<Guard Page={Settings}     />} />
+        <Route path="/admin"             element={<Guard         Page={Dashboard}      />} />
+        <Route path="/admin/fixtures"    element={<Guard         Page={Fixtures}       />} />
+        <Route path="/admin/standings"   element={<Guard         Page={Standings}      />} />
+        <Route path="/admin/awards"      element={<Guard         Page={Awards}         />} />
+        <Route path="/admin/zapasy/live" element={<Guard         Page={LiveMatchCentre}/>} />
+
+        {/* Superadmin-only league management pages */}
+        <Route path="/admin/import"       element={<SuperadminRoute Page={BulkImport}  />} />
+        <Route path="/admin/clubs"        element={<SuperadminRoute Page={Clubs}       />} />
+        <Route path="/admin/clubs/:clubId/edit" element={<SuperadminRoute Page={ClubDetail} />} />
+        <Route path="/admin/news"         element={<SuperadminRoute Page={News}        />} />
+        <Route path="/admin/media"        element={<SuperadminRoute Page={Media}       />} />
+        <Route path="/admin/media/:albumId" element={<SuperadminRoute Page={MediaAlbum}/>} />
+        <Route path="/admin/users"        element={<SuperadminRoute Page={Users}       />} />
+        <Route path="/admin/branding"     element={<SuperadminRoute Page={Branding}    />} />
+        <Route path="/admin/sponsors"     element={<SuperadminRoute Page={Sponsors}    />} />
+        <Route path="/admin/disciplinary" element={<SuperadminRoute Page={Disciplinary}/>} />
+        <Route path="/admin/referees"     element={<SuperadminRoute Page={Referees}    />} />
+        <Route path="/admin/settings"     element={<SuperadminRoute Page={Settings}    />} />
+
+        {/* Club dashboard — access controlled internally by club membership */}
         <Route path="/admin/clubs/:clubSlug" element={<Guard Page={ClubDashboard} />} />
-        <Route path="/admin/zapasy/live"    element={<Guard Page={LiveMatchCentre} />} />
-        <Route path="/admin/import"          element={<Guard Page={BulkImport}      />} />
 
         <Route path="/vysledky" element={<FixturesPage />} />
         <Route path="/vysledky/:matchId" element={<MatchDetail />} />
