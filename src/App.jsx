@@ -3,6 +3,13 @@ import { Toaster } from 'react-hot-toast'
 import { useAuth } from './hooks/useAuth'
 
 import Home from './pages/public/Home'
+import ClubProfile from './pages/public/ClubProfile'
+import PlayerProfile from './pages/public/PlayerProfile'
+import FixturesPage from './pages/public/Fixtures'
+import StandingsPage from './pages/public/Standings'
+import NewsPage from './pages/public/News'
+import ArticlePage from './pages/public/Article'
+import StatsPage from './pages/public/Stats'
 
 import Login from './pages/admin/Login'
 import Dashboard from './pages/admin/Dashboard'
@@ -54,6 +61,16 @@ export default function App() {
         <Route path="/admin/disciplinary" element={<Guard Page={Disciplinary}/>} />
         <Route path="/admin/referees"    element={<Guard Page={Referees}     />} />
         <Route path="/admin/settings"    element={<Guard Page={Settings}     />} />
+
+        <Route path="/vysledky" element={<FixturesPage />} />
+        <Route path="/tabulka" element={<StandingsPage />} />
+        <Route path="/novinky" element={<NewsPage />} />
+        <Route path="/novinky/:slug" element={<ArticlePage />} />
+        <Route path="/statistiky" element={<StatsPage />} />
+
+        <Route path="/kluby" element={<Navigate to="/" replace />} />
+        <Route path="/kluby/:clubId" element={<ClubProfile />} />
+        <Route path="/kluby/:clubId/hrac/:playerId" element={<PlayerProfile />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

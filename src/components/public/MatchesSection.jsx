@@ -1,15 +1,16 @@
+import { Link } from 'react-router-dom'
 import { Calendar, Clock } from 'lucide-react'
 import { RECENT_MATCHES, UPCOMING_FIXTURES } from '../../data/placeholder'
 
-function SectionHeader({ title, href }) {
+function SectionHeader({ title, to }) {
   return (
     <div className="flex items-center justify-between mb-4">
       <h2 className="text-xs font-black uppercase tracking-widest text-yellow-400 border-l-2 border-yellow-400 pl-3">
         {title}
       </h2>
-      <a href={href} className="text-xs text-slate-600 hover:text-slate-300 uppercase tracking-wide transition-colors">
+      <Link to={to} className="text-xs text-slate-600 hover:text-slate-300 uppercase tracking-wide transition-colors">
         Všetky →
-      </a>
+      </Link>
     </div>
   )
 }
@@ -75,13 +76,13 @@ export default function MatchesSection() {
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
-          <SectionHeader title="Posledné výsledky" href="/vysledky" />
+          <SectionHeader title="Posledné výsledky" to="/vysledky" />
           <div className="space-y-2">
             {RECENT_MATCHES.map((m, i) => <MatchResult key={i} match={m} />)}
           </div>
         </div>
         <div>
-          <SectionHeader title="Najbližší program" href="/program" />
+          <SectionHeader title="Najbližší program" to="/vysledky" />
           <div className="space-y-2">
             {UPCOMING_FIXTURES.map((m, i) => <Fixture key={i} match={m} />)}
           </div>

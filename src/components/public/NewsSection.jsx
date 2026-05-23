@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { Newspaper, ArrowRight } from 'lucide-react'
 import { NEWS } from '../../data/placeholder'
 
@@ -17,12 +18,12 @@ export default function NewsSection() {
             Novinky
           </h2>
         </div>
-        <a
-          href="/novinky"
+        <Link
+          to="/novinky"
           className="text-xs text-slate-600 hover:text-slate-300 uppercase tracking-wide transition-colors"
         >
           Všetky →
-        </a>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
