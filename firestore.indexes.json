@@ -4,7 +4,7 @@
       "collectionGroup": "news",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "active",      "order": "ASCENDING" },
+        { "fieldPath": "status",      "order": "ASCENDING" },
         { "fieldPath": "publishedAt", "order": "DESCENDING" }
       ]
     },
@@ -12,16 +12,32 @@
       "collectionGroup": "news",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "active", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "slug",   "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "news",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "club",        "order": "ASCENDING" },
+        { "fieldPath": "publishedAt", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "player_stats",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "name",  "order": "ASCENDING" },
-        { "fieldPath": "club",  "order": "ASCENDING" }
+        { "fieldPath": "name",   "order": "ASCENDING" },
+        { "fieldPath": "club",   "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "player_stats",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "season", "order": "ASCENDING" },
+        { "fieldPath": "goals",  "order": "DESCENDING" }
       ]
     }
   ],

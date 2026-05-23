@@ -66,16 +66,21 @@ service cloud.firestore {
     }
 
     // ── Filtered public reads ─────────────────────────────────────────
-    // News: unauthenticated clients may only read published (active) articles.
-    // Queries must include where('active', '==', true) to satisfy this rule.
+    // News: unauthenticated clients may only read published articles.
     match /news/{doc} {
-      allow read: if resource.data.active == true || isAuth();
+      allow read: if resource.data.status == 'published' || isAuth();
       allow write: if isAuth();
     }
 
-    // Sponsors: unauthenticated clients may only read active sponsors.
+    // Sponsors: all sponsors are public (footer filters by tier in the query).
     match /sponsors/{doc} {
-      allow read: if resource.data.active == true || isAuth();
+      allow read: if true;
+      allow write: if isAuth();
+    }
+
+    // Academy subcollections are public (youth rosters).
+    match /clubs/{clubId}/{subcollection}/{playerId} {
+      allow read: if true;
       allow write: if isAuth();
     }
 
