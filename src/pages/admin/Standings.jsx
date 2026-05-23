@@ -1,48 +1,63 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
+import { collection, query, orderBy, onSnapshot, getDocs, where } from 'firebase/firestore'
 import { RefreshCw, ChevronDown } from 'lucide-react'
 import { toast } from 'react-hot-toast'
+import { db } from '../../services/firebase'
 import AdminLayout from '../../components/admin/AdminLayout'
 import StandingsTable from '../../components/admin/standings/StandingsTable'
 import DeductionsPanel from '../../components/admin/standings/DeductionsPanel'
-import { computeStandings } from '../../utils/standings'
-import { fetchCollection } from '../../services/api'
 
 const SEASONS = ['2025/26', '2024/25', '2023/24']
 
 export default function Standings() {
   const [season, setSeason] = useState('2025/26')
-  const [fixtures, setFixtures] = useState([])
+  const [standings, setStandings] = useState([])
   const [deductions, setDeductions] = useState([])
+  const [completedCount, setCompletedCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
 
-  async function load(showSpinner = true) {
-    if (showSpinner) setLoading(true)
-    else setRefreshing(true)
+  // Live standings from Cloud Function — updates automatically whenever fixtures change
+  useEffect(() => {
+    setLoading(true)
+    const unsub = onSnapshot(
+      query(collection(db, 'standings'), orderBy('pos', 'asc')),
+      (snap) => {
+        const rows = []
+        let completed = 0
+        snap.docs.forEach((d) => {
+          if (d.id === '_meta') { completed = d.data().completedMatches ?? 0; return }
+          rows.push({ id: d.id, ...d.data() })
+        })
+        setStandings(rows)
+        setCompletedCount(completed)
+        setLoading(false)
+      },
+      () => { toast.error('Chyba pri načítaní tabuľky'); setLoading(false) }
+    )
+    return unsub
+  }, [])
+
+  async function loadDeductions() {
     try {
-      const [fx, ded] = await Promise.all([
-        fetchCollection('fixtures'),
-        fetchCollection('deductions'),
-      ])
-      setFixtures(fx)
-      setDeductions(ded.filter((d) => d.season === season))
+      const snap = await getDocs(
+        query(collection(db, 'deductions'), where('season', '==', season))
+      )
+      setDeductions(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
     } catch {
-      toast.error('Chyba pri načítaní dát')
-    } finally {
-      setLoading(false)
-      setRefreshing(false)
+      toast.error('Chyba pri načítaní odpočtov')
     }
   }
 
-  useEffect(() => { load() }, [season])
+  useEffect(() => { loadDeductions() }, [season])
 
-  const standings = useMemo(
-    () => computeStandings(fixtures, deductions),
-    [fixtures, deductions]
-  )
+  async function handleRefresh() {
+    setRefreshing(true)
+    await loadDeductions()
+    setRefreshing(false)
+  }
 
   const hasDeductions = deductions.length > 0
-  const completedCount = fixtures.filter((f) => f.status === 'completed').length
 
   return (
     <AdminLayout>
@@ -74,7 +89,7 @@ export default function Standings() {
 
             {/* Refresh */}
             <button
-              onClick={() => load(false)}
+              onClick={handleRefresh}
               disabled={refreshing}
               className="flex items-center gap-2 border border-slate-200 text-slate-600 px-3 py-2 rounded-lg text-sm font-bold hover:bg-white transition-colors disabled:opacity-50"
             >
@@ -97,7 +112,7 @@ export default function Standings() {
             <DeductionsPanel
               deductions={deductions}
               season={season}
-              onSaved={() => load(false)}
+              onSaved={handleRefresh}
             />
           </div>
         </div>
