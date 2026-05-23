@@ -3,8 +3,10 @@ import { collection, doc, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../services/firebase'
 import { CLUBS_2025_26 } from '../config/clubs-config'
 import { computeStandings } from '../utils/standings'
+import { useAuth } from './useAuth'
 
 export function useClubData(slug) {
+  const { isSuperadmin, userData, loading: authLoading } = useAuth()
   const [state, setState] = useState({
     club: null, profile: null, players: [],
     fixtures: [], standings: [], news: [], playerStats: [],
@@ -12,11 +14,18 @@ export function useClubData(slug) {
   })
 
   useEffect(() => {
-    if (!slug) return
+    if (!slug || authLoading) return
 
     const staticClub = CLUBS_2025_26.find((c) => c.slug === slug)
     if (!staticClub) {
       setState((s) => ({ ...s, loading: false, error: 'Klub nenájdený' }))
+      return
+    }
+
+    const userClubs = userData?.clubs ?? []
+    if (!isSuperadmin && !userClubs.includes(staticClub.name)) {
+      console.error('Unauthorized access attempt to club:', slug)
+      setState((s) => ({ ...s, loading: false, error: 'Unauthorized' }))
       return
     }
 
@@ -118,7 +127,7 @@ export function useClubData(slug) {
     ))
 
     return () => unsubs.forEach((u) => u())
-  }, [slug])
+  }, [slug, isSuperadmin, userData, authLoading])
 
   return state
 }

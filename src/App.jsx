@@ -32,6 +32,7 @@ import Settings from './pages/admin/Settings'
 import ClubDashboard from './pages/admin/ClubDashboard'
 import LiveMatchCentre from './pages/admin/LiveMatchCentre'
 import BulkImport from './pages/admin/BulkImport'
+import Unauthorized from './pages/admin/Unauthorized'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -82,6 +83,7 @@ export default function App() {
 
         {/* Club dashboard — access controlled internally by club membership */}
         <Route path="/admin/clubs/:clubSlug" element={<Guard Page={ClubDashboard} />} />
+        <Route path="/admin/unauthorized" element={<Guard Page={Unauthorized} />} />
 
         <Route path="/vysledky" element={<FixturesPage />} />
         <Route path="/vysledky/:matchId" element={<MatchDetail />} />

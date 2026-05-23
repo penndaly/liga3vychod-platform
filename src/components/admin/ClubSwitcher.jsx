@@ -2,10 +2,14 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
 import { CLUBS_2025_26 } from '../../config/clubs-config'
+import { useAuth } from '../../hooks/useAuth'
 
 export default function ClubSwitcher({ currentSlug }) {
+  const { isSuperadmin } = useAuth()
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
+
+  if (!isSuperadmin) return null
 
   return (
     <div className="relative">

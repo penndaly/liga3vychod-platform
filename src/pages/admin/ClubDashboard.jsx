@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useParams, Link, Navigate } from 'react-router-dom'
+import { getClubBySlug, getClubByName } from '../../config/clubs-config'
 import {
   LayoutDashboard, Users, Newspaper, Film, Star, ShoppingBag,
   FileText, Palette, Radio, Share2, Settings,
@@ -7,7 +8,6 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useClubData } from '../../hooks/useClubData'
-import { getClubBySlug } from '../../config/clubs-config'
 import ClubSwitcher from '../../components/admin/ClubSwitcher'
 import DashboardPanel from '../../components/admin/club/DashboardPanel'
 import RosterPanel    from '../../components/admin/club/RosterPanel'
@@ -90,26 +90,9 @@ export default function ClubDashboard() {
   const hasAccess = isSuperadmin || (configClub && userClubs.includes(configClub.name))
 
   if (!hasAccess) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
-        <div className="text-center space-y-4 max-w-sm">
-          <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto">
-            <Lock size={24} className="text-red-500" />
-          </div>
-          <p className="text-white font-black text-lg">Prístup zamietnutý</p>
-          <p className="text-slate-500 text-sm">
-            Nemáte oprávnenie spravovať klub{' '}
-            <span className="text-yellow-400 font-bold">{configClub?.name ?? clubSlug}</span>.
-          </p>
-          <Link
-            to="/admin"
-            className="inline-block mt-2 px-5 py-2.5 bg-yellow-400 text-slate-950 text-xs font-black uppercase tracking-widest rounded-lg hover:bg-yellow-300 transition-colors"
-          >
-            ← Dashboard
-          </Link>
-        </div>
-      </div>
-    )
+    const myClubName = userData?.clubs?.[0]
+    const mySlug = myClubName ? getClubByName(myClubName)?.slug : null
+    return <Navigate to={mySlug ? `/admin/clubs/${mySlug}` : '/admin/unauthorized'} replace />
   }
   // ─────────────────────────────────────────────────────────────────────
 
