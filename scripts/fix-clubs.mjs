@@ -42,20 +42,20 @@ const auth = getAuth(app)
 
 // ── Club definitions ───────────────────────────────────────────────────────
 const CLUBS = [
-  { id: 1,  name: 'FK Humenné',             short: 'HMN', slug: 'humenne',           strength: 8 },
-  { id: 2,  name: 'FK Spišská Nová Ves',    short: 'SNV', slug: 'spisska-nova-ves',  strength: 7 },
-  { id: 3,  name: 'ŠK Odeva Lipany',        short: 'LIP', slug: 'lipany',            strength: 6 },
-  { id: 4,  name: 'MŠK Tesla Stropkov',     short: 'STR', slug: 'stropkov',          strength: 5 },
-  { id: 5,  name: 'FK Poprad',              short: 'POP', slug: 'poprad',            strength: 7 },
-  { id: 6,  name: 'OFK SIM Raslavice',      short: 'RAS', slug: 'raslavice',         strength: 4 },
-  { id: 7,  name: 'Spartak Medzev',         short: 'MED', slug: 'medzev',            strength: 5 },
-  { id: 8,  name: '1. MFK Kežmarok',        short: 'KEŽ', slug: 'kezmarok',          strength: 6 },
-  { id: 9,  name: 'FC Lokomotíva',          short: 'LOK', slug: 'lokomotiva',        strength: 5 },
-  { id: 10, name: 'FC Košice B',            short: 'KSB', slug: 'kosice-b',          strength: 8 },
-  { id: 11, name: 'MFK Snina',              short: 'SNA', slug: 'snina',             strength: 6 },
-  { id: 12, name: 'MFK Vranov nad Topľou',  short: 'VNT', slug: 'vranov',            strength: 7 },
-  { id: 13, name: 'MFK Slovan Sabinov',     short: 'SAB', slug: 'sabinov',           strength: 5 },
-  { id: 14, name: 'MŠK Spišské Podhradie',  short: 'SPP', slug: 'spisske-podhradie', strength: 4 },
+  { id: 1,  name: 'FK Bardejov',                    short: 'BDJ', slug: 'bardejov',          strength: 7 },
+  { id: 2,  name: 'MFK Snina',                      short: 'SNA', slug: 'snina',             strength: 6 },
+  { id: 3,  name: 'MFK Vranov nad Topľou',           short: 'VNT', slug: 'vranov',            strength: 7 },
+  { id: 4,  name: 'FC Košice B',                    short: 'KSB', slug: 'kosice-b',          strength: 8 },
+  { id: 5,  name: 'MŠK Spišské Podhradie',           short: 'SPP', slug: 'spisske-podhradie', strength: 5 },
+  { id: 6,  name: 'FK Spišská Nová Ves',            short: 'SNV', slug: 'spisska-nova-ves',  strength: 6 },
+  { id: 7,  name: 'MFK Slovan Sabinov',             short: 'SAB', slug: 'sabinov',           strength: 5 },
+  { id: 8,  name: 'FK Poprad',                      short: 'POP', slug: 'poprad',            strength: 7 },
+  { id: 9,  name: 'OFK Baník Lehota pod Vtáčnikom', short: 'LEH', slug: 'lehota',            strength: 4 },
+  { id: 10, name: '1. MFK Kežmarok',               short: 'KEŽ', slug: 'kezmarok',          strength: 6 },
+  { id: 11, name: 'MFK Stará Ľubovňa',             short: 'STĽ', slug: 'stara-lubovna',     strength: 5 },
+  { id: 12, name: 'FK Slavoj Trebišov',             short: 'TRB', slug: 'trebisov',          strength: 6 },
+  { id: 13, name: 'MFK Tatran Liptovský Mikuláš',   short: 'LMK', slug: 'liptovsky-mikulas', strength: 7 },
+  { id: 14, name: 'MŠK Rimavská Sobota',            short: 'RSB', slug: 'rimavska-sobota',   strength: 4 },
 ]
 
 // ── Helpers ────────────────────────────────────────────────────────────────
