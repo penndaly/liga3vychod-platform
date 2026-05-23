@@ -1,11 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
-import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore'
+import { collection, query, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore'
 import { Trophy, ChevronDown, Minus } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { db } from '../../services/firebase'
 import { CLUBS } from '../../data/placeholder'
 import { getClubByName } from '../../config/clubs-config'
-import { computeStandings } from '../../utils/standings'
 import Navbar from '../../components/public/Navbar'
 import Footer from '../../components/public/Footer'
 
@@ -83,37 +82,31 @@ function SkeletonRow() {
 }
 
 export default function StandingsPage() {
-  const [season,     setSeason]     = useState(SEASONS[0])
-  const [fixtures,   setFixtures]   = useState([])
-  const [deductions, setDeductions] = useState([])
-  const [rules,      setRules]      = useState(null)
-  const [loading,    setLoading]    = useState(true)
+  const [season,    setSeason]    = useState(SEASONS[0])
+  const [standings, setStandings] = useState([])
+  const [rules,     setRules]     = useState(null)
+  const [loading,   setLoading]   = useState(true)
 
+  // Live standings from the pre-computed standings collection
   useEffect(() => {
     setLoading(true)
-    async function load() {
-      try {
-        const [fxSnap, dedSnap, rulesSnap] = await Promise.all([
-          getDocs(collection(db, 'fixtures')),
-          getDocs(query(collection(db, 'deductions'), where('season', '==', season))),
-          getDoc(doc(db, 'settings', 'rules')),
-        ])
-        setFixtures(fxSnap.docs.map((d) => d.data()))
-        setDeductions(dedSnap.docs.map((d) => d.data()))
-        setRules(rulesSnap.exists() ? rulesSnap.data() : null)
-      } catch {
-        // silently fall back to computed standings from empty data
-      } finally {
+    const unsub = onSnapshot(
+      query(collection(db, 'standings'), orderBy('pos', 'asc')),
+      (snap) => {
+        setStandings(snap.docs.filter((d) => d.id !== '_meta').map((d) => ({ id: d.id, ...d.data() })))
         setLoading(false)
-      }
-    }
-    load()
-  }, [season])
+      },
+      () => setLoading(false)
+    )
+    return unsub
+  }, [])
 
-  const standings = useMemo(
-    () => computeStandings(fixtures, deductions),
-    [fixtures, deductions]
-  )
+  // Zone rules from settings (not season-dependent)
+  useEffect(() => {
+    getDoc(doc(db, 'settings', 'rules'))
+      .then((snap) => { if (snap.exists()) setRules(snap.data()) })
+      .catch(() => {})
+  }, [])
 
   const zones = useMemo(() => buildZones(rules), [rules])
 
