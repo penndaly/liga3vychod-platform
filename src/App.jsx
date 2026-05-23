@@ -27,6 +27,7 @@ import Awards from './pages/admin/Awards'
 import Disciplinary from './pages/admin/Disciplinary'
 import Referees from './pages/admin/Referees'
 import Settings from './pages/admin/Settings'
+import ClubDashboard from './pages/admin/ClubDashboard'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -61,6 +62,7 @@ export default function App() {
         <Route path="/admin/disciplinary" element={<Guard Page={Disciplinary}/>} />
         <Route path="/admin/referees"    element={<Guard Page={Referees}     />} />
         <Route path="/admin/settings"    element={<Guard Page={Settings}     />} />
+        <Route path="/admin/club/:clubSlug" element={<Guard Page={ClubDashboard} />} />
 
         <Route path="/vysledky" element={<FixturesPage />} />
         <Route path="/tabulka" element={<StandingsPage />} />
