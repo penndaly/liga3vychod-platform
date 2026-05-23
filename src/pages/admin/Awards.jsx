@@ -7,14 +7,16 @@ import AdminLayout from '../../components/admin/AdminLayout'
 import StatLeaderboard from '../../components/admin/awards/StatLeaderboard'
 import PlayerStatModal from '../../components/admin/awards/PlayerStatModal'
 import PotmSection from '../../components/admin/awards/PotmSection'
+import ClubPerformanceTab from '../../components/admin/ClubPerformanceTab'
 
 const SEASONS = ['2025/26', '2024/25', '2023/24']
 
 const TABS = [
-  { id: 'goals',   label: 'Strelci' },
-  { id: 'assists', label: 'Asistenti' },
-  { id: 'cards',   label: 'Karty' },
-  { id: 'potm',    label: 'Hráč mesiaca' },
+  { id: 'goals',       label: 'Strelci' },
+  { id: 'assists',     label: 'Asistenti' },
+  { id: 'cards',       label: 'Karty' },
+  { id: 'potm',        label: 'Hráč mesiaca' },
+  { id: 'performance', label: 'Výkonnosť klubov' },
 ]
 
 const TAB_CLS = (active) =>
@@ -178,6 +180,8 @@ export default function Awards() {
             onRefresh={loadPotm}
           />
         )}
+
+        {tab === 'performance' && <ClubPerformanceTab />}
       </div>
 
       {modal && (
