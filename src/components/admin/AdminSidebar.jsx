@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   Calendar,
   Radio,
+  Upload,
   Trophy,
   Shield,
   Newspaper,
@@ -19,6 +20,7 @@ import {
 const NAV = [
   { label: 'Dashboard',              icon: LayoutDashboard, to: '/admin',              exact: true },
   { label: 'Zápasy & Výsledky',      icon: Calendar,        to: '/admin/fixtures' },
+  { label: 'Import zápasov',         icon: Upload,          to: '/admin/import'   },
   { label: 'Live Match Centre',      icon: Radio,           to: '/admin/zapasy/live' },
   { label: 'Tabuľka',                icon: Trophy,          to: '/admin/standings' },
   { label: 'Kluby',                  icon: Shield,          to: '/admin/clubs' },

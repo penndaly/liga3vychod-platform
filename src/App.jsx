@@ -30,6 +30,7 @@ import Referees from './pages/admin/Referees'
 import Settings from './pages/admin/Settings'
 import ClubDashboard from './pages/admin/ClubDashboard'
 import LiveMatchCentre from './pages/admin/LiveMatchCentre'
+import BulkImport from './pages/admin/BulkImport'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -66,6 +67,7 @@ export default function App() {
         <Route path="/admin/settings"    element={<Guard Page={Settings}     />} />
         <Route path="/admin/clubs/:clubSlug" element={<Guard Page={ClubDashboard} />} />
         <Route path="/admin/zapasy/live"    element={<Guard Page={LiveMatchCentre} />} />
+        <Route path="/admin/import"          element={<Guard Page={BulkImport}      />} />
 
         <Route path="/vysledky" element={<FixturesPage />} />
         <Route path="/tabulka" element={<StandingsPage />} />
