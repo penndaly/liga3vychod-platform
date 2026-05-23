@@ -1,0 +1,53 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    function isSmall() {
+      return request.resource.size < 5 * 1024 * 1024; // 5 MB
+    }
+
+    // League logo — public read, authenticated image upload only.
+    match /settings/league_logo {
+      allow read: if true;
+      allow write: if isAuth() && isImage() && isSmall();
+    }
+
+    // Club logos — public read, authenticated image upload only.
+    match /clubs/{clubId}/logo {
+      allow read: if true;
+      allow write: if isAuth() && isImage() && isSmall();
+    }
+
+    // News cover images — public read, authenticated image upload only.
+    match /news/{articleId}/cover {
+      allow read: if true;
+      allow write: if isAuth() && isImage() && isSmall();
+    }
+
+    // Sponsor logos — public read, authenticated image upload only.
+    match /sponsors/{sponsorId}/logo {
+      allow read: if true;
+      allow write: if isAuth() && isImage() && isSmall();
+    }
+
+    // Media album photos — public read, authenticated upload.
+    // Files land at media/{albumId}/{timestamp}_{filename}.
+    match /media/{albumId}/{filename} {
+      allow read: if true;
+      allow write: if isAuth() && isSmall();
+    }
+
+    // Deny everything else.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

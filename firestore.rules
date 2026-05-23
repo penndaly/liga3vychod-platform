@@ -1,0 +1,119 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // ── Public league data ────────────────────────────────────────────
+    // Anyone can read season/league display settings; only admins write.
+    match /settings/{doc} {
+      allow read: if true;
+      allow write: if isAuth();
+    }
+
+    // Full fixture list is public (standings, results, programme pages).
+    match /fixtures/{doc} {
+      allow read: if true;
+      allow write: if isAuth();
+    }
+
+    // Points deductions are public (shown in standings table).
+    match /deductions/{doc} {
+      allow read: if true;
+      allow write: if isAuth();
+    }
+
+    // Club profiles and rosters are public.
+    match /clubs/{clubId} {
+      allow read: if true;
+      allow write: if isAuth();
+
+      match /players/{playerId} {
+        allow read: if true;
+        allow write: if isAuth();
+      }
+    }
+
+    // Player stats drive the public leaderboards.
+    match /player_stats/{doc} {
+      allow read: if true;
+      allow write: if isAuth();
+    }
+
+    // Awards (Player of the Month) are public.
+    match /awards_potm/{doc} {
+      allow read: if true;
+      allow write: if isAuth();
+    }
+
+    // Media albums and items are public.
+    match /media_albums/{albumId} {
+      allow read: if true;
+      allow write: if isAuth();
+
+      match /items/{itemId} {
+        allow read: if true;
+        allow write: if isAuth();
+      }
+    }
+
+    // Referees — basic registry is public; operational sub-data is admin-only.
+    match /referees/{doc} {
+      allow read: if true;
+      allow write: if isAuth();
+    }
+
+    // ── Filtered public reads ─────────────────────────────────────────
+    // News: unauthenticated clients may only read published (active) articles.
+    // Queries must include where('active', '==', true) to satisfy this rule.
+    match /news/{doc} {
+      allow read: if resource.data.active == true || isAuth();
+      allow write: if isAuth();
+    }
+
+    // Sponsors: unauthenticated clients may only read active sponsors.
+    match /sponsors/{doc} {
+      allow read: if resource.data.active == true || isAuth();
+      allow write: if isAuth();
+    }
+
+    // ── Admin-only collections ────────────────────────────────────────
+    // Disciplinary records are sensitive; no public access.
+    match /suspensions/{doc} {
+      allow read, write: if isAuth();
+    }
+
+    match /fines/{doc} {
+      allow read, write: if isAuth();
+    }
+
+    match /disciplinary_decisions/{doc} {
+      allow read, write: if isAuth();
+    }
+
+    // Referee operational data is internal.
+    match /referee_assignments/{doc} {
+      allow read, write: if isAuth();
+    }
+
+    match /referee_availability/{doc} {
+      allow read, write: if isAuth();
+    }
+
+    match /referee_ratings/{doc} {
+      allow read, write: if isAuth();
+    }
+
+    // User records are admin-only.
+    match /users/{doc} {
+      allow read, write: if isAuth();
+    }
+
+    // ── Deny everything else ──────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
