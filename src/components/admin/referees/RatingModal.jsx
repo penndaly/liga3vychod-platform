@@ -1,0 +1,141 @@
+import { useState } from 'react'
+import { X } from 'lucide-react'
+import { toast } from 'react-hot-toast'
+import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { db } from '../../../services/firebase'
+import { CLUBS } from '../../../data/placeholder'
+
+const LABEL = 'block text-xs font-bold uppercase tracking-widest text-slate-400 mb-1.5'
+const INPUT  = 'w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-yellow-400 transition-colors bg-white'
+
+function StarPicker({ value, onChange }) {
+  const [hover, setHover] = useState(0)
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button
+          key={n}
+          type="button"
+          onClick={() => onChange(n)}
+          onMouseEnter={() => setHover(n)}
+          onMouseLeave={() => setHover(0)}
+          className={`text-3xl leading-none transition-colors ${
+            n <= (hover || value) ? 'text-yellow-400' : 'text-slate-200'
+          }`}
+        >
+          ★
+        </button>
+      ))}
+      <span className="ml-2 self-center text-sm font-bold text-slate-500">
+        {value > 0 ? ['', 'Slabý', 'Podpriemerný', 'Priemerný', 'Dobrý', 'Výborný'][value] : ''}
+      </span>
+    </div>
+  )
+}
+
+export default function RatingModal({ season, entry, referees, onClose, onSaved }) {
+  const isEdit = Boolean(entry?.id)
+  const activeRefs = referees.filter((r) => r.active !== false)
+
+  const [form, setForm] = useState({
+    refereeId: entry?.refereeId ?? (activeRefs[0]?.id ?? ''),
+    round:     entry?.round     != null ? String(entry.round) : '',
+    home:      entry?.home      ?? (CLUBS[0]?.name ?? ''),
+    away:      entry?.away      ?? (CLUBS[1]?.name ?? ''),
+    rating:    entry?.rating    ?? 0,
+    notes:     entry?.notes     ?? '',
+  })
+  const [saving, setSaving] = useState(false)
+  const set = (f, v) => setForm((p) => ({ ...p, [f]: v }))
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    if (form.rating === 0) { toast.error('Vyberte hodnotenie'); return }
+    setSaving(true)
+    try {
+      const ref = referees.find((r) => r.id === form.refereeId)
+      const data = {
+        refereeId:   form.refereeId,
+        refereeName: ref?.name ?? '',
+        round:       Number(form.round),
+        home:        form.home,
+        away:        form.away,
+        rating:      form.rating,
+        notes:       form.notes.trim(),
+        season,
+      }
+      if (isEdit) {
+        await updateDoc(doc(db, 'referee_ratings', entry.id), { ...data, updatedAt: serverTimestamp() })
+        toast.success('Hodnotenie aktualizované')
+      } else {
+        await addDoc(collection(db, 'referee_ratings'), { ...data, createdAt: serverTimestamp() })
+        toast.success('Hodnotenie uložené')
+      }
+      onSaved()
+    } catch {
+      toast.error('Chyba pri ukladaní')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <h2 className="text-sm font-black uppercase tracking-widest text-slate-900">
+            {isEdit ? 'Upraviť hodnotenie' : 'Nové hodnotenie'}
+          </h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 transition-colors"><X size={18} /></button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className={LABEL}>Rozhodca</label>
+            <select value={form.refereeId} onChange={(e) => set('refereeId', e.target.value)} className={INPUT}>
+              {activeRefs.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={LABEL}>Kolo</label>
+              <input type="number" required min="1" max="46" value={form.round} onChange={(e) => set('round', e.target.value)} className={INPUT} placeholder="22" />
+            </div>
+            <div />
+          </div>
+
+          <div>
+            <label className={LABEL}>Domáci</label>
+            <select value={form.home} onChange={(e) => set('home', e.target.value)} className={INPUT}>
+              {CLUBS.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={LABEL}>Hostia</label>
+            <select value={form.away} onChange={(e) => set('away', e.target.value)} className={INPUT}>
+              {CLUBS.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <label className={LABEL}>Hodnotenie výkonu</label>
+            <StarPicker value={form.rating} onChange={(v) => set('rating', v)} />
+          </div>
+
+          <div>
+            <label className={LABEL}>Poznámka</label>
+            <textarea value={form.notes} onChange={(e) => set('notes', e.target.value)} rows={2} className={INPUT} placeholder="Stručný komentár k výkonu..." />
+          </div>
+
+          <div className="flex gap-3 pt-1">
+            <button type="button" onClick={onClose} className="flex-1 py-2.5 border border-slate-200 text-slate-600 text-sm font-bold rounded-lg hover:bg-slate-50 transition-colors">Zrušiť</button>
+            <button type="submit" disabled={saving} className="flex-1 py-2.5 bg-yellow-400 text-slate-950 text-sm font-black rounded-lg hover:bg-yellow-300 disabled:opacity-50 transition-colors">
+              {saving ? 'Ukladám...' : 'Uložiť'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
