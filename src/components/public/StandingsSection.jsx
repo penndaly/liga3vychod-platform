@@ -1,10 +1,9 @@
-import { useState, useEffect, useMemo } from 'react'
-import { collection, getDocs } from 'firebase/firestore'
+import { useState, useEffect } from 'react'
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore'
 import { Trophy } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { db } from '../../services/firebase'
 import { getClubByName } from '../../config/clubs-config'
-import { computeStandings } from '../../utils/standings'
 
 const FORM_CLS = { W: 'bg-green-500', D: 'bg-yellow-400', L: 'bg-red-500' }
 
@@ -42,29 +41,21 @@ function getZone(pos, total = 14) {
 }
 
 export default function StandingsSection() {
-  const [fixtures,   setFixtures]   = useState([])
-  const [deductions, setDeductions] = useState([])
-  const [loading,    setLoading]    = useState(true)
+  const [standings, setStandings] = useState([])
+  const [loading,   setLoading]   = useState(true)
 
   useEffect(() => {
-    async function load() {
-      try {
-        const [fxSnap, dedSnap] = await Promise.all([
-          getDocs(collection(db, 'fixtures')),
-          getDocs(collection(db, 'deductions')),
-        ])
-        setFixtures(fxSnap.docs.map((d) => d.data()))
-        setDeductions(dedSnap.docs.map((d) => d.data()))
-      } catch {
-        // silently fail — table stays empty
-      } finally {
+    const unsub = onSnapshot(
+      query(collection(db, 'standings'), orderBy('pos', 'asc')),
+      (snap) => {
+        setStandings(snap.docs.filter((d) => d.id !== '_meta').map((d) => ({ id: d.id, ...d.data() })))
         setLoading(false)
-      }
-    }
-    load()
+      },
+      () => setLoading(false)
+    )
+    return unsub
   }, [])
 
-  const standings = useMemo(() => computeStandings(fixtures, deductions), [fixtures, deductions])
   const top5 = standings.slice(0, 5)
   const total = standings.length || 14
 

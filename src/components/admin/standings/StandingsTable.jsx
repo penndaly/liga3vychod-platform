@@ -1,5 +1,10 @@
 import { RefreshCw } from 'lucide-react'
-import { ZONES } from '../../../utils/standings'
+
+const ZONES = {
+  1: 'promotion', 2: 'promotion',
+  13: 'playoff',
+  14: 'relegation',
+}
 
 const FORM_COLOR = { W: 'bg-green-500', D: 'bg-yellow-400', L: 'bg-red-400' }
 

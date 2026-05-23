@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { Download, Loader } from 'lucide-react'
-import { collection, getDocs, query, where } from 'firebase/firestore'
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore'
 import { toast } from 'react-hot-toast'
 import { db } from '../../../services/firebase'
-import { computeStandings } from '../../../utils/standings'
 
 function downloadCsv(filename, rows, headers) {
   const escape = (v) => {
@@ -63,13 +62,8 @@ export default function ExportSection({ season }) {
   }
 
   async function exportStandings() {
-    const [fxSnap, dedSnap] = await Promise.all([
-      getDocs(collection(db, 'fixtures')),
-      getDocs(query(collection(db, 'deductions'), where('season', '==', season))),
-    ])
-    const fixtures   = fxSnap.docs.map((d) => d.data())
-    const deductions = dedSnap.docs.map((d) => d.data())
-    const standings  = computeStandings(fixtures, deductions)
+    const snap = await getDocs(query(collection(db, 'standings'), orderBy('pos', 'asc')))
+    const standings = snap.docs.filter((d) => d.id !== '_meta').map((d) => d.data())
     downloadCsv('standings.csv', standings, ['pos', 'club', 'p', 'w', 'd', 'l', 'gf', 'ga', 'gd', 'deduction', 'finalPts'])
   }
 

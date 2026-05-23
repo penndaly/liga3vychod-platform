@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
-import { collection, doc, onSnapshot, query, where } from 'firebase/firestore'
+import { collection, doc, onSnapshot, query, where, orderBy } from 'firebase/firestore'
 import { db } from '../services/firebase'
 import { CLUBS_2025_26 } from '../config/clubs-config'
-import { computeStandings } from '../utils/standings'
 import { useAuth } from './useAuth'
 
 export function useClubData(slug) {
@@ -37,7 +36,7 @@ export function useClubData(slug) {
       profile:     null,
       players:     [],
       allFixtures: [],
-      deductions:  [],
+      standings:   [],
       news:        [],
       playerStats: [],
     }
@@ -57,7 +56,7 @@ export function useClubData(slug) {
         profile:     acc.profile,
         players:     acc.players,
         fixtures:    clubFixtures,
-        standings:   computeStandings(acc.allFixtures, acc.deductions),
+        standings:   acc.standings,
         news:        acc.news,
         playerStats: acc.playerStats,
         loading:     false,
@@ -77,7 +76,7 @@ export function useClubData(slug) {
           profile:     acc.profile,
           players:     acc.players,
           fixtures:    clubFixtures,
-          standings:   computeStandings(acc.allFixtures, acc.deductions),
+          standings:   acc.standings,
           news:        acc.news,
           playerStats: acc.playerStats,
           loading:     false,
@@ -102,15 +101,19 @@ export function useClubData(slug) {
       update('players', snap.docs.map((d) => ({ id: d.id, ...d.data() })))
     }, onErr))
 
-    // 3. All fixtures (needed for full standings computation)
+    // 3. All fixtures (needed for club-specific fixture list)
     unsubs.push(onSnapshot(collection(db, 'fixtures'), (snap) => {
       update('allFixtures', snap.docs.map((d) => d.data()))
     }, onErr))
 
-    // 4. Deductions
-    unsubs.push(onSnapshot(collection(db, 'deductions'), (snap) => {
-      update('deductions', snap.docs.map((d) => d.data()))
-    }, onErr))
+    // 4. Pre-computed standings
+    unsubs.push(onSnapshot(
+      query(collection(db, 'standings'), orderBy('pos', 'asc')),
+      (snap) => {
+        update('standings', snap.docs.filter((d) => d.id !== '_meta').map((d) => ({ id: d.id, ...d.data() })))
+      },
+      onErr
+    ))
 
     // 5. Club news
     unsubs.push(onSnapshot(

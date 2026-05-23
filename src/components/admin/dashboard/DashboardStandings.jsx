@@ -1,21 +1,27 @@
-import { useMemo } from 'react'
+import { useState, useEffect } from 'react'
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore'
 import { Trophy } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { useCollection } from '../../../hooks/useFirestore'
+import { db } from '../../../services/firebase'
 import { getClubByName } from '../../../config/clubs-config'
-import { computeStandings } from '../../../utils/standings'
 
 const FORM_COLOR = { W: 'bg-green-500', D: 'bg-yellow-400', L: 'bg-red-400' }
 
 export default function DashboardStandings() {
-  const { data: fixtures,   loading: lf } = useCollection('fixtures')
-  const { data: deductions, loading: ld } = useCollection('deductions')
-  const loading = lf || ld
+  const [top5,    setTop5]    = useState([])
+  const [loading, setLoading] = useState(true)
 
-  const top5 = useMemo(
-    () => computeStandings(fixtures, deductions).slice(0, 5),
-    [fixtures, deductions]
-  )
+  useEffect(() => {
+    const unsub = onSnapshot(
+      query(collection(db, 'standings'), orderBy('pos', 'asc')),
+      (snap) => {
+        setTop5(snap.docs.filter((d) => d.id !== '_meta').slice(0, 5).map((d) => ({ id: d.id, ...d.data() })))
+        setLoading(false)
+      },
+      () => setLoading(false)
+    )
+    return unsub
+  }, [])
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
