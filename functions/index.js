@@ -1,4 +1,5 @@
 const { onDocumentWritten } = require('firebase-functions/v2/firestore')
+const { onCall, HttpsError } = require('firebase-functions/v2/https')
 const { initializeApp } = require('firebase-admin/app')
 const { getFirestore, FieldValue } = require('firebase-admin/firestore')
 
@@ -111,4 +112,101 @@ exports.updateStandings = onDocumentWritten('fixtures/{fixtureId}', async () => 
   await batch.commit()
 
   console.log(`Standings updated: ${sorted.length} clubs, ${fixtures.filter((m) => m.status === 'completed').length} completed matches`)
+})
+
+// ── sendOrderStatusEmail ───────────────────────────────────────────────────
+// Callable function: sends a transactional email to the customer when their
+// order status changes. Requires an email provider (SendGrid, Mailgun, etc.)
+// to be configured — see the TODO below.
+//
+// Call from the client:
+//   const fn = httpsCallable(getFunctions(), 'sendOrderStatusEmail')
+//   await fn({ orderId, clubSlug, newStatus })
+
+const EMAIL_TEMPLATES = {
+  processing: (order) => ({
+    subject: `Vaša objednávka #${order.orderNumber} je v spracovaní`,
+    text: [
+      `Dobrý deň ${order.customerName},`,
+      '',
+      `Vaša objednávka #${order.orderNumber} bola prijatá a momentálne ju spracovávame.`,
+      'O ďalšom postupe vás budeme informovať e-mailom.',
+      '',
+      'Ďakujeme za váš nákup!',
+    ].join('\n'),
+  }),
+  shipped: (order) => ({
+    subject: `Vaša objednávka #${order.orderNumber} bola odoslaná`,
+    text: [
+      `Dobrý deň ${order.customerName},`,
+      '',
+      `Vaša objednávka #${order.orderNumber} bola odoslaná.`,
+      order.trackingNumber ? `Číslo zásielky: ${order.trackingNumber}` : '',
+      order.carrier        ? `Dopravca: ${order.carrier}`              : '',
+      order.estimatedDelivery ? `Predpokladané doručenie: ${order.estimatedDelivery}` : '',
+      '',
+      'Ďakujeme za váš nákup!',
+    ].filter((l) => l !== '').join('\n'),
+  }),
+  delivered: (order) => ({
+    subject: `Objednávka #${order.orderNumber} bola doručená`,
+    text: [
+      `Dobrý deň ${order.customerName},`,
+      '',
+      `Vaša objednávka #${order.orderNumber} bola úspešne doručená.`,
+      'Dúfame, že ste spokojní s vaším nákupom!',
+      '',
+      'Ďakujeme za podporu klubu.',
+    ].join('\n'),
+  }),
+}
+
+exports.sendOrderStatusEmail = onCall(async (request) => {
+  const { orderId, clubSlug, newStatus } = request.data
+
+  if (!orderId || !clubSlug || !newStatus) {
+    throw new HttpsError('invalid-argument', 'orderId, clubSlug and newStatus are required')
+  }
+
+  // Fetch the order — try numeric clubId first, then treat clubSlug as the doc id
+  let orderSnap = null
+  try {
+    orderSnap = await db.collection('clubs').doc(clubSlug).collection('orders').doc(orderId).get()
+    if (!orderSnap.exists) {
+      throw new HttpsError('not-found', `Order ${orderId} not found under club ${clubSlug}`)
+    }
+  } catch (err) {
+    if (err instanceof HttpsError) throw err
+    throw new HttpsError('internal', `Firestore error: ${err.message}`)
+  }
+
+  const order    = orderSnap.data()
+  const template = EMAIL_TEMPLATES[newStatus]
+
+  if (!template) {
+    // No email needed for this status (e.g. 'cancelled' — handle separately if desired)
+    return { success: true, skipped: true, reason: 'no template for status' }
+  }
+
+  const { subject, text } = template(order)
+
+  // ── TODO: plug in your email provider here ───────────────────────────
+  // Option A — SendGrid:
+  //   const sgMail = require('@sendgrid/mail')
+  //   sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+  //   await sgMail.send({ to: order.customerEmail, from: 'shop@yourdomain.sk', subject, text })
+  //
+  // Option B — Nodemailer (SMTP):
+  //   const nodemailer = require('nodemailer')
+  //   const transporter = nodemailer.createTransport({ ... })
+  //   await transporter.sendMail({ to: order.customerEmail, from: 'shop@yourdomain.sk', subject, text })
+  //
+  // Option C — Firebase Extension "Trigger Email":
+  //   await db.collection('mail').add({ to: order.customerEmail, message: { subject, text } })
+  // ─────────────────────────────────────────────────────────────────────
+
+  console.log(`[sendOrderStatusEmail] Would send "${subject}" to ${order.customerEmail}`)
+  console.log(text)
+
+  return { success: true, to: order.customerEmail, subject }
 })

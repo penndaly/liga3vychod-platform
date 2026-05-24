@@ -6,7 +6,6 @@ import {
 } from 'lucide-react'
 import {
   doc, getDoc, setDoc, serverTimestamp,
-  collection, onSnapshot, query, orderBy,
 } from 'firebase/firestore'
 import { toast } from 'react-hot-toast'
 import { db } from '../../../services/firebase'
@@ -15,6 +14,7 @@ import { getClubBySlug, getClubByName } from '../../../config/clubs-config'
 import { useProducts } from '../../../hooks/useProducts'
 import ProductCard from '../../../components/admin/ProductCard'
 import ProductForm from '../../../components/admin/ProductForm'
+import OrdersList from '../../../components/admin/OrdersList'
 
 const CATEGORIES = [
   { value: null,       label: 'Všetky' },
@@ -90,69 +90,7 @@ function ShopSettings({ clubId, clubColor }) {
   )
 }
 
-// ── Orders placeholder panel ────────────────────────────────────────────
-function OrdersPanel({ clubId, clubColor }) {
-  const [orders,  setOrders]  = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    if (!clubId) return
-    const unsub = onSnapshot(
-      query(collection(db, 'clubs', clubId, 'orders'), orderBy('createdAt', 'desc')),
-      (snap) => { setOrders(snap.docs.map((d) => ({ id: d.id, ...d.data() }))); setLoading(false) },
-      () => setLoading(false)
-    )
-    return unsub
-  }, [clubId])
-
-  const STATUS_CFG = {
-    pending:   { label: 'Čaká', cls: 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/30' },
-    paid:      { label: 'Zaplatená', cls: 'bg-green-500/20 text-green-400 border border-green-500/30' },
-    shipped:   { label: 'Odoslaná', cls: 'bg-blue-500/20 text-blue-400 border border-blue-500/30' },
-    completed: { label: 'Dokončená', cls: 'bg-slate-600 text-slate-300 border border-slate-500' },
-    cancelled: { label: 'Zrušená', cls: 'bg-red-500/20 text-red-400 border border-red-500/30' },
-  }
-
-  if (loading) return <div className="flex items-center justify-center py-20"><Loader size={20} className="animate-spin text-slate-600" /></div>
-
-  if (orders.length === 0) {
-    return (
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl flex flex-col items-center justify-center py-24 text-slate-700">
-        <ClipboardList size={32} className="mb-3" />
-        <p className="text-sm font-black uppercase tracking-widest mb-1">Žiadne objednávky</p>
-        <p className="text-xs text-slate-600">Objednávky sa zobrazia tu po integrácii platobnej brány</p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-slate-800 text-xs text-slate-600 font-bold uppercase tracking-widest">
-            <th className="text-left px-5 py-3">Objednávka</th>
-            <th className="text-left px-3 py-3">Zákazník</th>
-            <th className="text-right px-3 py-3">Suma</th>
-            <th className="text-left px-4 py-3">Stav</th>
-          </tr>
-        </thead>
-        <tbody>
-          {orders.map((o) => {
-            const s = STATUS_CFG[o.status] ?? STATUS_CFG.pending
-            return (
-              <tr key={o.id} className="border-b border-slate-800/50 hover:bg-slate-800/40 transition-colors">
-                <td className="px-5 py-3 font-bold text-slate-300 text-xs font-mono">{o.id.slice(0, 8).toUpperCase()}</td>
-                <td className="px-3 py-3 text-slate-400 text-xs">{o.customerName ?? o.email ?? '—'}</td>
-                <td className="px-3 py-3 text-right font-black text-slate-200">{o.total?.toFixed(2) ?? '—'} €</td>
-                <td className="px-4 py-3"><span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${s.cls}`}>{s.label}</span></td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-    </div>
-  )
-}
+// (OrdersPanel replaced by OrdersList component)
 
 // ── Products panel ──────────────────────────────────────────────────────
 function ProductsPanel({ clubSlug, clubColor }) {
@@ -285,7 +223,8 @@ const TABS = [
 export default function EShop() {
   const { clubSlug } = useParams()
   const { isSuperadmin, userData, loading: authLoading } = useAuth()
-  const [activeTab, setActiveTab] = useState('products')
+  const [activeTab,     setActiveTab]     = useState('products')
+  const [newOrderCount, setNewOrderCount] = useState(0)
 
   const configClub = getClubBySlug(clubSlug)
   const clubColor  = configClub?.color ?? '#facc15'
@@ -341,12 +280,17 @@ export default function EShop() {
             <button
               key={id}
               onClick={() => setActiveTab(id)}
-              className={`flex items-center gap-1.5 px-4 py-3.5 text-xs font-black uppercase tracking-widest border-b-2 transition-all shrink-0 ${
+              className={`relative flex items-center gap-1.5 px-4 py-3.5 text-xs font-black uppercase tracking-widest border-b-2 transition-all shrink-0 ${
                 activeTab === id ? 'text-white' : 'border-transparent text-slate-500 hover:text-slate-300'
               }`}
               style={activeTab === id ? { borderBottomColor: clubColor } : { borderColor: 'transparent' }}
             >
               <Icon size={12} /> {label}
+              {id === 'orders' && newOrderCount > 0 && (
+                <span className="ml-1 bg-emerald-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full leading-none">
+                  {newOrderCount}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -355,7 +299,7 @@ export default function EShop() {
       {/* Content */}
       <main className="flex-1 overflow-y-auto p-6">
         {activeTab === 'products' && <ProductsPanel clubSlug={clubSlug} clubColor={clubColor} />}
-        {activeTab === 'orders'   && <OrdersPanel   clubId={clubId}     clubColor={clubColor} />}
+        {activeTab === 'orders'   && <OrdersList    clubId={clubId}     clubColor={clubColor} onNewCount={setNewOrderCount} />}
         {activeTab === 'settings' && <ShopSettings  clubId={clubId}     clubColor={clubColor} />}
       </main>
     </div>
