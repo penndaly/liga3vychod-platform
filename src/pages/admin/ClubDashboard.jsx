@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, Link, Navigate } from 'react-router-dom'
+import { useParams, Link, Navigate, useNavigate } from 'react-router-dom'
 import { getClubBySlug, getClubByName } from '../../config/clubs-config'
 import {
   LayoutDashboard, Users, Newspaper, Film, Star, ShoppingBag,
@@ -69,6 +69,7 @@ function ClubBadge({ club, logoUrl, loading }) {
 export default function ClubDashboard() {
   const { clubSlug } = useParams()
   const { isSuperadmin, userData, loading: authLoading } = useAuth()
+  const navigate = useNavigate()
   const [activeSection, setActiveSection] = useState('dashboard')
 
   const data = useClubData(clubSlug)
@@ -191,23 +192,40 @@ export default function ClubDashboard() {
         <aside className="w-56 shrink-0 bg-slate-900 border-r border-slate-800 flex flex-col py-3 overflow-y-auto">
           {NAV.map(({ id, label, icon: Icon }) => {
             const active = activeSection === id
+            const isAcademy = id === 'academy'
+            const btnCls = `flex items-center gap-3 px-4 py-2.5 text-sm font-bold transition-all text-left w-full ${
+              active
+                ? 'border-l-2 bg-white/5 text-white pl-[14px]'
+                : 'border-l-2 border-transparent text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'
+            }`
+            const btnStyle = active ? { borderLeftColor: clubColor } : {}
+            const icon = (
+              <Icon
+                size={15}
+                style={active ? { color: clubColor } : {}}
+                className={active ? '' : 'text-slate-600'}
+              />
+            )
+            if (isAcademy) {
+              return (
+                <button
+                  key={id}
+                  onClick={() => navigate(`/admin/clubs/${clubSlug}/akademia`)}
+                  className={btnCls}
+                  style={btnStyle}
+                >
+                  {icon}{label}
+                </button>
+              )
+            }
             return (
               <button
                 key={id}
                 onClick={() => setActiveSection(id)}
-                className={`flex items-center gap-3 px-4 py-2.5 text-sm font-bold transition-all text-left ${
-                  active
-                    ? 'border-l-2 bg-white/5 text-white pl-[14px]'
-                    : 'border-l-2 border-transparent text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'
-                }`}
-                style={active ? { borderLeftColor: clubColor } : {}}
+                className={btnCls}
+                style={btnStyle}
               >
-                <Icon
-                  size={15}
-                  style={active ? { color: clubColor } : {}}
-                  className={active ? '' : 'text-slate-600'}
-                />
-                {label}
+                {icon}{label}
               </button>
             )
           })}

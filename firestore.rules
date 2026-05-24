@@ -77,6 +77,11 @@ service cloud.firestore {
         allow read: if true;
         allow write: if isEditor();
       }
+
+      match /academy/{teamId}/players/{playerId} {
+        allow read: if isAuth();
+        allow write: if isEditor();
+      }
     }
 
     match /player_stats/{doc} {
