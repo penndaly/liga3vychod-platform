@@ -7,7 +7,7 @@ import {
 import {
   ChevronLeft, MapPin, Calendar, Building2,
   Users, Trophy, Target, HelpingHand, BookOpen, Square,
-  ChevronRight,
+  ChevronRight, ShoppingBag,
 } from 'lucide-react'
 import { db } from '../../services/firebase'
 import { CLUBS_2025_26 } from '../../config/clubs-config'
@@ -232,6 +232,15 @@ export default function ClubProfile() {
                       </div>
                     </div>
                   )}
+
+                  <div className="flex gap-2 mt-5">
+                    <Link
+                      to={`/kluby/${clubId}/obchod`}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-white hover:border-slate-500 transition-colors"
+                    >
+                      <ShoppingBag size={12} /> E-Shop
+                    </Link>
+                  </div>
                 </>
               )}
             </div>

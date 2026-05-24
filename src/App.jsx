@@ -13,6 +13,7 @@ import NewsPage from './pages/public/News'
 import ArticlePage from './pages/public/Article'
 import StatsPage from './pages/public/Stats'
 import AcademyRegistration from './pages/public/club/AcademyRegistration'
+import ClubShop from './pages/public/ClubShop'
 
 import Login from './pages/admin/Login'
 import Dashboard from './pages/admin/Dashboard'
@@ -99,6 +100,7 @@ export default function App() {
 
         <Route path="/kluby" element={<ClubsPage />} />
         <Route path="/kluby/:clubId" element={<ClubProfile />} />
+        <Route path="/kluby/:clubId/obchod" element={<ClubShop />} />
         <Route path="/kluby/:clubId/hrac/:playerId" element={<PlayerProfile />} />
         <Route path="/akademia/:clubSlug/registracia" element={<AcademyRegistration />} />
 
