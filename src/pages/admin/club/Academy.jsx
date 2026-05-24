@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useParams, Link, Navigate } from 'react-router-dom'
-import { Shield, Plus, GraduationCap, Loader } from 'lucide-react'
+import { Shield, Plus, GraduationCap, ClipboardList } from 'lucide-react'
 import { useAuth } from '../../../hooks/useAuth'
 import { useAcademyTeam, TEAM_DEFS } from '../../../hooks/useAcademyTeams'
 import { getClubBySlug, getClubByName } from '../../../config/clubs-config'
 import AcademyTeamRoster from '../../../components/admin/AcademyTeamRoster'
 import AddAcademyPlayer from '../../../components/admin/AddAcademyPlayer'
 import PromotePlayerModal from '../../../components/admin/PromotePlayerModal'
+import AcademyTrials from './AcademyTrials'
 
 function TeamTab({ def, active, color, onClick }) {
   return (
@@ -70,6 +71,7 @@ export default function Academy() {
   const [activeTeam, setActiveTeam] = useState('U19')
   const [modal,      setModal]      = useState(null)
   // modal: null | { type: 'add' } | { type: 'edit', player } | { type: 'promote', player }
+  // activeTeam === 'TRIALS' shows the trials panel instead of a roster
 
   if (authLoading) return null
 
@@ -128,7 +130,7 @@ export default function Academy() {
         <div className="h-0.5 w-full" style={{ background: clubColor }} />
       </header>
 
-      {/* Age-group tab bar */}
+      {/* Tab bar */}
       <div className="bg-slate-900 border-b border-slate-800 shrink-0">
         <div className="flex overflow-x-auto px-5 scrollbar-none">
           {TEAM_DEFS.map((def) => (
@@ -137,23 +139,42 @@ export default function Academy() {
               def={def}
               active={activeTeam === def.id}
               color={clubColor}
-              onClick={() => setActiveTeam(def.id)}
+              onClick={() => { setActiveTeam(def.id); setModal(null) }}
             />
           ))}
+          {/* Trials tab */}
+          <button
+            onClick={() => { setActiveTeam('TRIALS'); setModal(null) }}
+            className={`shrink-0 flex flex-col items-center px-4 py-2.5 border-b-2 text-xs font-black uppercase tracking-widest transition-all ${
+              activeTeam === 'TRIALS'
+                ? 'text-white'
+                : 'border-transparent text-slate-500 hover:text-slate-300 hover:border-slate-700'
+            }`}
+            style={activeTeam === 'TRIALS' ? { borderBottomColor: clubColor } : {}}
+          >
+            <span className="flex items-center gap-1"><ClipboardList size={11} /> Skúšky</span>
+            <span className={`text-[9px] font-bold normal-case tracking-normal mt-0.5 ${activeTeam === 'TRIALS' ? 'text-slate-400' : 'text-slate-700'}`}>
+              Registrácie
+            </span>
+          </button>
         </div>
       </div>
 
       {/* Content */}
       <main className="flex-1 overflow-y-auto p-6">
-        <ActiveTeamPanel
-          key={activeTeam}
-          clubSlug={clubSlug}
-          teamDef={teamDef}
-          clubColor={clubColor}
-          onAdd={() => setModal({ type: 'add' })}
-          onEdit={(player) => setModal({ type: 'edit', player })}
-          onPromote={(player) => setModal({ type: 'promote', player })}
-        />
+        {activeTeam === 'TRIALS' ? (
+          <AcademyTrials clubSlug={clubSlug} clubColor={clubColor} />
+        ) : (
+          <ActiveTeamPanel
+            key={activeTeam}
+            clubSlug={clubSlug}
+            teamDef={teamDef}
+            clubColor={clubColor}
+            onAdd={() => setModal({ type: 'add' })}
+            onEdit={(player) => setModal({ type: 'edit', player })}
+            onPromote={(player) => setModal({ type: 'promote', player })}
+          />
+        )}
       </main>
 
       {/* Modals */}

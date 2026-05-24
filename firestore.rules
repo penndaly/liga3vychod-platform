@@ -82,6 +82,19 @@ service cloud.firestore {
         allow read: if isAuth();
         allow write: if isEditor();
       }
+
+      // Trial sessions: admin manages, public reads (for the registration form)
+      match /trial_sessions/{sessionId} {
+        allow read: if true;
+        allow write: if isEditor();
+      }
+
+      // Trial applications: anyone can submit (public form), editors can read/update
+      match /trial_applications/{appId} {
+        allow create: if true;
+        allow read, update: if isEditor();
+        allow delete: if isSuperadmin();
+      }
     }
 
     match /player_stats/{doc} {

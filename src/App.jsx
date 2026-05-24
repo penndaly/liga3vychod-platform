@@ -12,6 +12,7 @@ import StandingsPage from './pages/public/Standings'
 import NewsPage from './pages/public/News'
 import ArticlePage from './pages/public/Article'
 import StatsPage from './pages/public/Stats'
+import AcademyRegistration from './pages/public/club/AcademyRegistration'
 
 import Login from './pages/admin/Login'
 import Dashboard from './pages/admin/Dashboard'
@@ -97,6 +98,7 @@ export default function App() {
         <Route path="/kluby" element={<ClubsPage />} />
         <Route path="/kluby/:clubId" element={<ClubProfile />} />
         <Route path="/kluby/:clubId/hrac/:playerId" element={<PlayerProfile />} />
+        <Route path="/akademia/:clubSlug/registracia" element={<AcademyRegistration />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
