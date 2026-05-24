@@ -112,6 +112,16 @@ service cloud.firestore {
         allow write: if false; // written by generateHighlightsVideo Cloud Function only
       }
 
+      // Social API credentials (Page access tokens) — editor only, never public.
+      match /social_credentials/{platform} {
+        allow read, write: if isEditor();
+      }
+
+      // Social post history — editor read/write.
+      match /social_posts/{postId} {
+        allow read, write: if isEditor();
+      }
+
       // Trial sessions: admin manages, public reads (for the registration form)
       match /trial_sessions/{sessionId} {
         allow read: if true;
