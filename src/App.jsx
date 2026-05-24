@@ -35,6 +35,8 @@ import ClubDashboard from './pages/admin/ClubDashboard'
 import Academy from './pages/admin/club/Academy'
 import EShop from './pages/admin/club/EShop'
 import LiveBroadcast from './pages/admin/club/LiveBroadcast'
+import PagesManager from './pages/admin/club/PagesManager'
+import PageView from './pages/public/club/PageView'
 import LiveMatchCentre from './pages/admin/LiveMatchCentre'
 import BulkImport from './pages/admin/BulkImport'
 import Unauthorized from './pages/admin/Unauthorized'
@@ -91,6 +93,7 @@ export default function App() {
         <Route path="/admin/clubs/:clubSlug/akademia" element={<Guard Page={Academy}       />} />
         <Route path="/admin/clubs/:clubSlug/eshop"    element={<Guard Page={EShop}         />} />
         <Route path="/admin/clubs/:clubSlug/prenos"   element={<Guard Page={LiveBroadcast} />} />
+        <Route path="/admin/clubs/:clubSlug/stranky"  element={<Guard Page={PagesManager}  />} />
         <Route path="/admin/unauthorized" element={<Guard Page={Unauthorized} />} />
 
         <Route path="/vysledky" element={<FixturesPage />} />
@@ -102,7 +105,8 @@ export default function App() {
 
         <Route path="/kluby" element={<ClubsPage />} />
         <Route path="/kluby/:clubId" element={<ClubProfile />} />
-        <Route path="/kluby/:clubId/obchod" element={<ClubShop />} />
+        <Route path="/kluby/:clubId/obchod"          element={<ClubShop />} />
+        <Route path="/kluby/:clubId/strana/:pageSlug" element={<PageView />} />
         <Route path="/kluby/:clubId/hrac/:playerId" element={<PlayerProfile />} />
         <Route path="/akademia/:clubSlug/registracia" element={<AcademyRegistration />} />
 
