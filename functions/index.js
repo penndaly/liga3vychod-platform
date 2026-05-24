@@ -2,6 +2,10 @@ const { onDocumentWritten } = require('firebase-functions/v2/firestore')
 const { onCall, HttpsError } = require('firebase-functions/v2/https')
 const { initializeApp } = require('firebase-admin/app')
 const { getFirestore, FieldValue } = require('firebase-admin/firestore')
+const { getStorage } = require('firebase-admin/storage')
+const path = require('path')
+const os   = require('os')
+const fs   = require('fs')
 
 initializeApp()
 const db = getFirestore()
@@ -210,3 +214,157 @@ exports.sendOrderStatusEmail = onCall(async (request) => {
 
   return { success: true, to: order.customerEmail, subject }
 })
+
+// ── generateHighlightsVideo ────────────────────────────────────────────────
+// Callable function: cuts highlight clips from a recorded stream using FFmpeg,
+// concatenates them, and uploads the result to Firebase Storage.
+//
+// Requirements:
+//   - The full stream recording must be uploaded to Storage at:
+//       streams/{streamId}.mp4
+//   - fluent-ffmpeg and ffmpeg-static must be installed (see package.json)
+//
+// Call from the client:
+//   const fn = httpsCallable(getFunctions(), 'generateHighlightsVideo')
+//   await fn({ streamId, clips: [{ start, end, label }], clubId })
+//
+// The generated highlights file is saved to:
+//   highlights/{clubId}/{streamId}_highlights.mp4
+// and a download URL is written back to:
+//   clubs/{clubId}/highlight_exports/{jobId}
+
+exports.generateHighlightsVideo = onCall(
+  // Allocate extra memory and timeout for video processing
+  { memory: '2GiB', timeoutSeconds: 540 },
+  async (request) => {
+    const { streamId, clips, clubId } = request.data
+
+    if (!streamId || !clips || !Array.isArray(clips) || !clubId) {
+      throw new HttpsError('invalid-argument', 'streamId, clubId and clips[] are required')
+    }
+    if (clips.length === 0) {
+      throw new HttpsError('invalid-argument', 'clips array must not be empty')
+    }
+
+    // ── Create a job document so the client can track progress ──────────
+    const jobRef = db.collection('clubs').doc(String(clubId)).collection('highlight_exports').doc()
+    await jobRef.set({
+      streamId,
+      clipCount: clips.length,
+      status:    'processing',
+      createdAt: FieldValue.serverTimestamp(),
+      requestedBy: request.auth?.uid ?? null,
+    })
+    const jobId = jobRef.id
+
+    try {
+      // ── Lazy-load FFmpeg (only installed in the functions environment) ─
+      let ffmpeg, ffmpegPath
+      try {
+        ffmpeg     = require('fluent-ffmpeg')
+        ffmpegPath = require('ffmpeg-static')
+        ffmpeg.setFfmpegPath(ffmpegPath)
+      } catch {
+        // FFmpeg not available — mark job as pending for manual processing
+        await jobRef.update({ status: 'pending_ffmpeg', updatedAt: FieldValue.serverTimestamp() })
+        console.warn('[generateHighlightsVideo] fluent-ffmpeg not available; job queued as pending_ffmpeg')
+        return { success: true, jobId, queued: true, message: 'FFmpeg unavailable; job queued.' }
+      }
+
+      const bucket    = getStorage().bucket()
+      const tmpDir    = os.tmpdir()
+      const srcPath   = path.join(tmpDir, `${streamId}.mp4`)
+      const outPath   = path.join(tmpDir, `highlights_${streamId}.mp4`)
+      const concatList = path.join(tmpDir, `concat_${streamId}.txt`)
+
+      // ── Download source video ─────────────────────────────────────────
+      const srcFile = bucket.file(`streams/${streamId}.mp4`)
+      const [exists] = await srcFile.exists()
+      if (!exists) {
+        await jobRef.update({ status: 'error', error: 'Source stream file not found in Storage', updatedAt: FieldValue.serverTimestamp() })
+        throw new HttpsError('not-found', `streams/${streamId}.mp4 not found in Storage`)
+      }
+      await srcFile.download({ destination: srcPath })
+      console.log(`[generateHighlightsVideo] Downloaded source: ${srcPath}`)
+
+      // ── Cut individual segments ───────────────────────────────────────
+      const segmentFiles = []
+      for (let i = 0; i < clips.length; i++) {
+        const clip   = clips[i]
+        const start  = Math.max(0, clip.start)
+        const duration = Math.max(1, clip.end - start)
+        const segPath = path.join(tmpDir, `seg_${streamId}_${i}.mp4`)
+
+        await new Promise((resolve, reject) => {
+          ffmpeg(srcPath)
+            .setStartTime(start)
+            .setDuration(duration)
+            // Re-encode with fast settings for accurate seeking
+            .outputOptions(['-c:v libx264', '-preset ultrafast', '-c:a aac', '-avoid_negative_ts make_zero'])
+            .output(segPath)
+            .on('end',   resolve)
+            .on('error', (err) => reject(new Error(`Segment ${i} failed: ${err.message}`)))
+            .run()
+        })
+        segmentFiles.push(segPath)
+        console.log(`[generateHighlightsVideo] Segment ${i + 1}/${clips.length} cut`)
+      }
+
+      // ── Build concat list and merge ───────────────────────────────────
+      const concatContent = segmentFiles.map((f) => `file '${f}'`).join('\n')
+      fs.writeFileSync(concatList, concatContent)
+
+      await new Promise((resolve, reject) => {
+        ffmpeg()
+          .input(concatList)
+          .inputOptions(['-f concat', '-safe 0'])
+          .outputOptions(['-c copy'])
+          .output(outPath)
+          .on('end',   resolve)
+          .on('error', (err) => reject(new Error(`Concat failed: ${err.message}`)))
+          .run()
+      })
+      console.log(`[generateHighlightsVideo] Concatenation complete: ${outPath}`)
+
+      // ── Upload highlights to Storage ──────────────────────────────────
+      const destPath = `highlights/${clubId}/${streamId}_highlights.mp4`
+      await bucket.upload(outPath, {
+        destination: destPath,
+        metadata:    { contentType: 'video/mp4' },
+      })
+
+      // Generate a signed URL valid for 7 days
+      const [downloadUrl] = await bucket.file(destPath).getSignedUrl({
+        action:  'read',
+        expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
+      })
+
+      // ── Update job document with result ──────────────────────────────
+      await jobRef.update({
+        status:       'complete',
+        downloadUrl,
+        storagePath:  destPath,
+        updatedAt:    FieldValue.serverTimestamp(),
+      })
+
+      // ── Cleanup temp files ────────────────────────────────────────────
+      ;[srcPath, outPath, concatList, ...segmentFiles].forEach((f) => {
+        try { fs.unlinkSync(f) } catch { /* ignore */ }
+      })
+
+      console.log(`[generateHighlightsVideo] Job ${jobId} complete. URL: ${downloadUrl}`)
+      return { success: true, jobId, downloadUrl }
+
+    } catch (err) {
+      // Update job with error state — don't rethrow so the client gets a clean error object
+      await jobRef.update({
+        status:    'error',
+        error:     err.message,
+        updatedAt: FieldValue.serverTimestamp(),
+      }).catch(() => {})
+
+      if (err instanceof HttpsError) throw err
+      throw new HttpsError('internal', err.message)
+    }
+  }
+)

@@ -2,24 +2,26 @@
  * LiveBroadcast.jsx
  *
  * Standalone club page at /admin/clubs/:clubSlug/prenos
- * Three tabs: Prenos (stream controls) | Overlay (graphics editor) | Nastavenia (stream settings)
+ * Four tabs: Prenos | Overlay | Klipy | Nastavenia
  * Follows the same pattern as Academy.jsx and EShop.jsx.
  */
 
 import { useState } from 'react'
 import { useParams, Link, Navigate } from 'react-router-dom'
-import { Radio, Layers, Settings, Shield, ArrowLeft } from 'lucide-react'
+import { Radio, Layers, Scissors, Settings, ArrowLeft } from 'lucide-react'
 import { useAuth } from '../../../hooks/useAuth'
 import { getClubBySlug, getClubByName } from '../../../config/clubs-config'
 import { useStreamStatus } from '../../../hooks/useStreamStatus'
 import StreamControls from '../../../components/admin/StreamControls'
 import OverlayEditor  from '../../../components/admin/OverlayEditor'
+import ClipMarker     from '../../../components/admin/ClipMarker'
 import StreamSettings from '../../../components/admin/StreamSettings'
 
 const TABS = [
-  { id: 'controls', label: 'Prenos',      icon: Radio   },
-  { id: 'overlay',  label: 'Overlay',     icon: Layers  },
-  { id: 'settings', label: 'Nastavenia',  icon: Settings },
+  { id: 'controls', label: 'Prenos',     icon: Radio     },
+  { id: 'overlay',  label: 'Overlay',    icon: Layers    },
+  { id: 'clips',    label: 'Klipy',      icon: Scissors  },
+  { id: 'settings', label: 'Nastavenia', icon: Settings  },
 ]
 
 export default function LiveBroadcast() {
@@ -127,6 +129,12 @@ export default function LiveBroadcast() {
         {/* Overlay editor uses its own full-width layout */}
         {activeTab === 'overlay' && (
           <OverlayEditor clubId={clubId} clubColor={clubColor} />
+        )}
+
+        {activeTab === 'clips' && (
+          <div className="p-6">
+            <ClipMarker clubId={clubId} clubColor={clubColor} />
+          </div>
         )}
 
         {activeTab === 'settings' && (
