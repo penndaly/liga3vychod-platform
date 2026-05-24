@@ -34,6 +34,7 @@ import Settings from './pages/admin/Settings'
 import ClubDashboard from './pages/admin/ClubDashboard'
 import Academy from './pages/admin/club/Academy'
 import EShop from './pages/admin/club/EShop'
+import LiveBroadcast from './pages/admin/club/LiveBroadcast'
 import LiveMatchCentre from './pages/admin/LiveMatchCentre'
 import BulkImport from './pages/admin/BulkImport'
 import Unauthorized from './pages/admin/Unauthorized'
@@ -87,8 +88,9 @@ export default function App() {
 
         {/* Club dashboard — access controlled internally by club membership */}
         <Route path="/admin/clubs/:clubSlug" element={<Guard Page={ClubDashboard} />} />
-        <Route path="/admin/clubs/:clubSlug/akademia" element={<Guard Page={Academy} />} />
-        <Route path="/admin/clubs/:clubSlug/eshop"    element={<Guard Page={EShop}   />} />
+        <Route path="/admin/clubs/:clubSlug/akademia" element={<Guard Page={Academy}       />} />
+        <Route path="/admin/clubs/:clubSlug/eshop"    element={<Guard Page={EShop}         />} />
+        <Route path="/admin/clubs/:clubSlug/prenos"   element={<Guard Page={LiveBroadcast} />} />
         <Route path="/admin/unauthorized" element={<Guard Page={Unauthorized} />} />
 
         <Route path="/vysledky" element={<FixturesPage />} />

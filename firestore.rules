@@ -94,6 +94,13 @@ service cloud.firestore {
         allow delete: if isSuperadmin();
       }
 
+      // Live broadcast state + overlay config — public read (OBS HTML overlay),
+      // editor write (stream controls, overlay editor, settings).
+      match /broadcast/{docId} {
+        allow read: if true;
+        allow write: if isEditor();
+      }
+
       // Trial sessions: admin manages, public reads (for the registration form)
       match /trial_sessions/{sessionId} {
         allow read: if true;

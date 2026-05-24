@@ -207,7 +207,8 @@ export default function ClubDashboard() {
               />
             )
             const routeNav = isAcademy ? `/admin/clubs/${clubSlug}/akademia`
-              : id === 'eshop' ? `/admin/clubs/${clubSlug}/eshop`
+              : id === 'eshop'      ? `/admin/clubs/${clubSlug}/eshop`
+              : id === 'broadcast'  ? `/admin/clubs/${clubSlug}/prenos`
               : null
             if (routeNav) {
               return (
