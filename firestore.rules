@@ -83,6 +83,17 @@ service cloud.firestore {
         allow write: if isEditor();
       }
 
+      match /shop_config/{docId} {
+        allow read: if true;
+        allow write: if isEditor();
+      }
+
+      match /orders/{orderId} {
+        allow create: if true;
+        allow read, update: if isEditor();
+        allow delete: if isSuperadmin();
+      }
+
       // Trial sessions: admin manages, public reads (for the registration form)
       match /trial_sessions/{sessionId} {
         allow read: if true;

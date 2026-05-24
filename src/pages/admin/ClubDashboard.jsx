@@ -206,11 +206,14 @@ export default function ClubDashboard() {
                 className={active ? '' : 'text-slate-600'}
               />
             )
-            if (isAcademy) {
+            const routeNav = isAcademy ? `/admin/clubs/${clubSlug}/akademia`
+              : id === 'eshop' ? `/admin/clubs/${clubSlug}/eshop`
+              : null
+            if (routeNav) {
               return (
                 <button
                   key={id}
-                  onClick={() => navigate(`/admin/clubs/${clubSlug}/akademia`)}
+                  onClick={() => navigate(routeNav)}
                   className={btnCls}
                   style={btnStyle}
                 >
